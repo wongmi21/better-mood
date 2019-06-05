@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "58438165319",
+    "firebase_url": "https://better-mood.firebaseio.com",
+    "project_id": "better-mood",
+    "storage_bucket": "better-mood.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:58438165319:android:aef013376c27538e",
+        "android_client_info": {
+          "package_name": "com.bettermood"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "58438165319-adt36i7rsd29hnm89nn8c1so4vvtc71p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCY2G5xxtxQ72uqHqv5wmYC3mmvL5Mvhgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "58438165319-adt36i7rsd29hnm89nn8c1so4vvtc71p.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "58438165319-8ghgbpof0r48054pn1icp7527kbl2sii.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.bettermood"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
