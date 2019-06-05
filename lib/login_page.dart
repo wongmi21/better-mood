@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -50,8 +51,8 @@ class LoginPageState extends State<LoginPage> {
                 ),
                 onPressed: () {
                   handleFacebookLogin()
-                      .then((FirebaseUser user) => print(user))
-                      .catchError((e) => print(e));
+                      .then((FirebaseUser user) => alert(user))
+                      .catchError((e) => alert(e));
                 },
               ),
               RaisedButton(
@@ -73,8 +74,8 @@ class LoginPageState extends State<LoginPage> {
                 ),
                 onPressed: () {
                   handleGoogleLogin()
-                      .then((FirebaseUser user) => print(user))
-                      .catchError((e) => print(e));
+                      .then((FirebaseUser user) => alert(user))
+                      .catchError((e) => alert(e));
                 },
               ),
               Padding(
@@ -88,7 +89,17 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<FirebaseUser> handleFacebookLogin() async {}
+  Future<FirebaseUser> handleFacebookLogin() async {
+    FacebookLogin facebookLogin = FacebookLogin();
+    final facebookLoginResult = await facebookLogin
+        .logInWithReadPermissions(['email', 'public_profile']);
+    FacebookAccessToken token = facebookLoginResult.accessToken;
+    AuthCredential credential =
+        FacebookAuthProvider.getCredential(accessToken: token.token);
+    FirebaseUser user =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+    return user;
+  }
 
   Future<FirebaseUser> handleGoogleLogin() async {
     final GoogleSignInAccount googleUser = await googleSignIn.signIn();
@@ -102,17 +113,16 @@ class LoginPageState extends State<LoginPage> {
 
     final FirebaseUser user =
         await firebaseAuth.signInWithCredential(credential);
-    alert(user);
     return user;
   }
 
-  alert(FirebaseUser user) {
+  alert(x) {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
             content: ListView(
               children: [
-                Text(user.toString()),
+                Text(x.toString()),
               ],
             ),
           ),
