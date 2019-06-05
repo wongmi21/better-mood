@@ -8,13 +8,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  flutter_crashlytics:
+  
   firebase_core:
   firebase_analytics:
   firebase_auth:
 
-  google_sign_in:
   flutter_facebook_login:
+  google_sign_in:
 
 flutter:
   uses-material-design: true

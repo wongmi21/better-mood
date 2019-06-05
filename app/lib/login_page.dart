@@ -51,8 +51,8 @@ class LoginPageState extends State<LoginPage> {
                 ),
                 onPressed: () {
                   handleFacebookLogin()
-                      .then((FirebaseUser user) => alert(user))
-                      .catchError((e) => alert(e));
+                      .then((FirebaseUser user) => redirect(user))
+                      .catchError((e) => redirect(e));
                 },
               ),
               RaisedButton(
@@ -74,14 +74,14 @@ class LoginPageState extends State<LoginPage> {
                 ),
                 onPressed: () {
                   handleGoogleLogin()
-                      .then((FirebaseUser user) => alert(user))
-                      .catchError((e) => alert(e));
+                      .then((FirebaseUser user) => redirect(user))
+                      .catchError((e) => redirect(e));
                 },
               ),
               Padding(
                 padding: EdgeInsets.all(15),
               ),
-              Text('or continue as guest')
+              Text('or continue as Guest')
             ],
           ),
         ),
@@ -89,43 +89,33 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
+  // TODO: Handle null
   Future<FirebaseUser> handleFacebookLogin() async {
     FacebookLogin facebookLogin = FacebookLogin();
-    final facebookLoginResult = await facebookLogin
-        .logInWithReadPermissions(['email', 'public_profile']);
-    FacebookAccessToken token = facebookLoginResult.accessToken;
+    FacebookLoginResult result =
+        await facebookLogin.logInWithReadPermissions(null);
+    print(result.toString());
+    FacebookAccessToken accessToken = result.accessToken;
     AuthCredential credential =
-        FacebookAuthProvider.getCredential(accessToken: token.token);
+        FacebookAuthProvider.getCredential(accessToken: accessToken.token);
     FirebaseUser user =
         await FirebaseAuth.instance.signInWithCredential(credential);
     return user;
   }
 
+  // TODO: Handle null
   Future<FirebaseUser> handleGoogleLogin() async {
-    final GoogleSignInAccount googleUser = await googleSignIn.signIn();
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
+    GoogleSignInAccount googleUser = await googleSignIn.signIn();
+    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
-
-    final FirebaseUser user =
-        await firebaseAuth.signInWithCredential(credential);
+    FirebaseUser user = await firebaseAuth.signInWithCredential(credential);
     return user;
   }
 
-  alert(x) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-            content: ListView(
-              children: [
-                Text(x.toString()),
-              ],
-            ),
-          ),
-    );
+  redirect(x) {
+    Navigator.of(context).pushNamed('/home', arguments: x);
   }
 }
