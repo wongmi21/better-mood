@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "58438165319-dfctd65563ugin7qa570h2vagc4rqia0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bettermood",
+            "certificate_hash": "b576c0488b22796604ddf34627ef7c09f9e0de2e"
+          }
+        },
+        {
           "client_id": "58438165319-adt36i7rsd29hnm89nn8c1so4vvtc71p.apps.googleusercontent.com",
           "client_type": 3
         }

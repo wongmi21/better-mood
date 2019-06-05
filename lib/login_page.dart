@@ -30,6 +30,32 @@ class LoginPageState extends State<LoginPage> {
               SizedBox(height: 50),
               RaisedButton(
                 padding: EdgeInsets.symmetric(horizontal: 11),
+                color: Color(0xFF4267B2),
+                child: SizedBox(
+                  width: 247,
+                  height: 40,
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/facebook_logo.png',
+                        height: 18,
+                      ),
+                      SizedBox(width: 24),
+                      Text(
+                        'Continue with Facebook',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                onPressed: () {
+                  handleFacebookLogin()
+                      .then((FirebaseUser user) => print(user))
+                      .catchError((e) => print(e));
+                },
+              ),
+              RaisedButton(
+                padding: EdgeInsets.symmetric(horizontal: 11),
                 color: Colors.white,
                 child: SizedBox(
                   width: 247,
@@ -41,12 +67,12 @@ class LoginPageState extends State<LoginPage> {
                         height: 18,
                       ),
                       SizedBox(width: 24),
-                      Text('Sign in with Google'),
+                      Text('Continue with Google'),
                     ],
                   ),
                 ),
                 onPressed: () {
-                  handleSignIn()
+                  handleGoogleLogin()
                       .then((FirebaseUser user) => print(user))
                       .catchError((e) => print(e));
                 },
@@ -54,7 +80,7 @@ class LoginPageState extends State<LoginPage> {
               Padding(
                 padding: EdgeInsets.all(15),
               ),
-              Text('or continue without signing up')
+              Text('or continue as guest')
             ],
           ),
         ),
@@ -62,7 +88,9 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<FirebaseUser> handleSignIn() async {
+  Future<FirebaseUser> handleFacebookLogin() async {}
+
+  Future<FirebaseUser> handleGoogleLogin() async {
     final GoogleSignInAccount googleUser = await googleSignIn.signIn();
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
@@ -74,7 +102,7 @@ class LoginPageState extends State<LoginPage> {
 
     final FirebaseUser user =
         await firebaseAuth.signInWithCredential(credential);
-
+    alert(user);
     return user;
   }
 
