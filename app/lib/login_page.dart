@@ -93,7 +93,7 @@ class LoginPageState extends State<LoginPage> {
   Future<FirebaseUser> handleFacebookLogin() async {
     FacebookLogin facebookLogin = FacebookLogin();
     FacebookLoginResult result =
-        await facebookLogin.logInWithReadPermissions(null);
+        await facebookLogin.logInWithReadPermissions(['email']);
     print(result.toString());
     FacebookAccessToken accessToken = result.accessToken;
     AuthCredential credential =

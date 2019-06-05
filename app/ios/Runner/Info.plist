@@ -28,13 +28,6 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.58438165319-8ghgbpof0r48054pn1icp7527kbl2sii</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
 				<string>fb1321918614629120</string>
 			</array>
 		</dict>
