@@ -9,6 +9,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_crashlytics:
+
+  fish_redux:
   
   firebase_core:
   firebase_analytics:

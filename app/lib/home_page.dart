@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'globals.dart';
 
 class HomePage extends StatelessWidget {
   @override
@@ -7,9 +8,7 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Home'),
       ),
-      body: Text(
-        ModalRoute.of(context).settings.arguments.toString(),
-      ),
+      body: Text('Welcome ${Global.user.displayName ?? 'Guest'}'),
     );
   }
 }

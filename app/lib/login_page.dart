@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+import 'globals.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -11,8 +13,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
-  final GoogleSignIn googleSignIn = GoogleSignIn();
-  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +24,7 @@ class LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/logo.png',
-                fit: BoxFit.contain,
-                width: 275,
-              ),
+              Image.asset('assets/logo.png', fit: BoxFit.contain, width: 275),
               SizedBox(height: 50),
               RaisedButton(
                 padding: EdgeInsets.symmetric(horizontal: 11),
@@ -37,10 +34,7 @@ class LoginPageState extends State<LoginPage> {
                   height: 40,
                   child: Row(
                     children: [
-                      Image.asset(
-                        'assets/facebook_logo.png',
-                        height: 18,
-                      ),
+                      Image.asset('assets/facebook_logo.png', height: 18),
                       SizedBox(width: 24),
                       Text(
                         'Continue with Facebook',
@@ -50,38 +44,40 @@ class LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 onPressed: () {
-                  handleFacebookLogin()
-                      .then((FirebaseUser user) => redirect(user))
-                      .catchError((e) => redirect(e));
+                  _handleFacebookLogin().then((user) {
+                    Global.user = user;
+                    redirect();
+                  }).catchError((e) {/* TODO */});
                 },
               ),
               RaisedButton(
                 padding: EdgeInsets.symmetric(horizontal: 11),
                 color: Colors.white,
                 child: SizedBox(
-                  width: 247,
-                  height: 40,
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/google_logo.png',
-                        height: 18,
-                      ),
+                    width: 247,
+                    height: 40,
+                    child: Row(children: [
+                      Image.asset('assets/google_logo.png', height: 18),
                       SizedBox(width: 24),
                       Text('Continue with Google'),
-                    ],
-                  ),
-                ),
+                    ])),
                 onPressed: () {
-                  handleGoogleLogin()
-                      .then((FirebaseUser user) => redirect(user))
-                      .catchError((e) => redirect(e));
+                  _handleGoogleLogin().then((user) {
+                    Global.user = user;
+                    redirect();
+                  }).catchError((e) {/* TODO */});
                 },
               ),
-              Padding(
-                padding: EdgeInsets.all(15),
+              Padding(padding: EdgeInsets.all(15)),
+              FlatButton(
+                child: Text('or continue as Guest'),
+                onPressed: () {
+                  _handleAnonLogin().then((user) {
+                    Global.user = user;
+                    redirect();
+                  }).catchError((e) {/* TODO */});
+                },
               ),
-              Text('or continue as Guest')
             ],
           ),
         ),
@@ -89,33 +85,43 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  // TODO: Handle null
-  Future<FirebaseUser> handleFacebookLogin() async {
-    FacebookLogin facebookLogin = FacebookLogin();
+  Future<FirebaseUser> _handleFacebookLogin() async {
     FacebookLoginResult result =
-        await facebookLogin.logInWithReadPermissions(['email']);
-    print(result.toString());
-    FacebookAccessToken accessToken = result.accessToken;
-    AuthCredential credential =
-        FacebookAuthProvider.getCredential(accessToken: accessToken.token);
-    FirebaseUser user =
-        await FirebaseAuth.instance.signInWithCredential(credential);
-    return user;
+        await FacebookLogin().logInWithReadPermissions(['email']);
+
+    switch (result.status) {
+      case FacebookLoginStatus.loggedIn:
+        AuthCredential credential = FacebookAuthProvider.getCredential(
+            accessToken: result.accessToken.token);
+        FirebaseUser user = await Global.auth.signInWithCredential(credential);
+        return user;
+        break;
+      case FacebookLoginStatus.cancelledByUser:
+        break;
+      case FacebookLoginStatus.error:
+        throw Exception(result.errorMessage);
+    }
+    return null;
   }
 
-  // TODO: Handle null
-  Future<FirebaseUser> handleGoogleLogin() async {
-    GoogleSignInAccount googleUser = await googleSignIn.signIn();
+  Future<FirebaseUser> _handleGoogleLogin() async {
+    GoogleSignInAccount googleUser = await _googleSignIn.signIn();
     GoogleSignInAuthentication googleAuth = await googleUser.authentication;
     AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
-    FirebaseUser user = await firebaseAuth.signInWithCredential(credential);
-    return user;
+    FirebaseUser firebaseUser =
+        await Global.auth.signInWithCredential(credential);
+    return firebaseUser;
   }
 
-  redirect(x) {
-    Navigator.of(context).pushNamed('/home', arguments: x);
+  void redirect() {
+    Navigator.of(context).pushNamed('/home');
+  }
+
+  Future<FirebaseUser> _handleAnonLogin() async {
+    FirebaseUser user = await Global.auth.signInAnonymously();
+    return user;
   }
 }
