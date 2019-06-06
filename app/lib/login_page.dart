@@ -14,10 +14,12 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomSheet: LinearProgressIndicator(value: _isLoading ? null : 0),
       body: Container(
         color: Theme.of(context).backgroundColor,
         child: Center(
@@ -43,12 +45,7 @@ class LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                onPressed: () {
-                  _handleFacebookLogin().then((user) {
-                    Global.user = user;
-                    redirect();
-                  }).catchError((e) {/* TODO */});
-                },
+                onPressed: () => _handleFacebookLogin(),
               ),
               RaisedButton(
                 padding: EdgeInsets.symmetric(horizontal: 11),
@@ -61,22 +58,12 @@ class LoginPageState extends State<LoginPage> {
                       SizedBox(width: 24),
                       Text('Continue with Google'),
                     ])),
-                onPressed: () {
-                  _handleGoogleLogin().then((user) {
-                    Global.user = user;
-                    redirect();
-                  }).catchError((e) {/* TODO */});
-                },
+                onPressed: () => _handleGoogleLogin(),
               ),
               Padding(padding: EdgeInsets.all(15)),
               FlatButton(
                 child: Text('or continue as Guest'),
-                onPressed: () {
-                  _handleAnonLogin().then((user) {
-                    Global.user = user;
-                    redirect();
-                  }).catchError((e) {/* TODO */});
-                },
+                onPressed: () => _handleAnonLogin(),
               ),
             ],
           ),
@@ -85,27 +72,30 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<FirebaseUser> _handleFacebookLogin() async {
+  void _handleFacebookLogin() async {
     FacebookLoginResult result =
         await FacebookLogin().logInWithReadPermissions(['email']);
 
     switch (result.status) {
       case FacebookLoginStatus.loggedIn:
+        setState(() => _isLoading = true);
         AuthCredential credential = FacebookAuthProvider.getCredential(
             accessToken: result.accessToken.token);
         FirebaseUser user = await Global.auth.signInWithCredential(credential);
-        return user;
+        // Global.user = user;
+        setState(() => _isLoading = false);
+        redirect();
         break;
       case FacebookLoginStatus.cancelledByUser:
         break;
       case FacebookLoginStatus.error:
         throw Exception(result.errorMessage);
     }
-    return null;
   }
 
-  Future<FirebaseUser> _handleGoogleLogin() async {
+  void _handleGoogleLogin() async {
     GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+    setState(() => _isLoading = true);
     GoogleSignInAuthentication googleAuth = await googleUser.authentication;
     AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleAuth.accessToken,
@@ -113,15 +103,20 @@ class LoginPageState extends State<LoginPage> {
     );
     FirebaseUser firebaseUser =
         await Global.auth.signInWithCredential(credential);
-    return firebaseUser;
+    Global.user = firebaseUser;
+    setState(() => _isLoading = false);
+    redirect();
+  }
+
+  void _handleAnonLogin() async {
+    setState(() => _isLoading = true);
+    FirebaseUser user = await Global.auth.signInAnonymously();
+    Global.user = user;
+    setState(() => _isLoading = false);
+    redirect();
   }
 
   void redirect() {
     Navigator.of(context).pushNamed('/home');
-  }
-
-  Future<FirebaseUser> _handleAnonLogin() async {
-    FirebaseUser user = await Global.auth.signInAnonymously();
-    return user;
   }
 }
