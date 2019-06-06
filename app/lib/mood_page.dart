@@ -1,0 +1,273 @@
+import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'globals.dart';
+import 'drawer.dart';
+import 'mood_page_fab.dart';
+
+class MoodPage extends StatefulWidget {
+  @override
+  State<MoodPage> createState() {
+    return MoodPageState();
+  }
+}
+
+class MoodPageState extends State<MoodPage> {
+  List<Mood> moods = [];
+  int selectedChartIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    Global.firestore
+        .collection('moods')
+        .where(('userId'), isEqualTo: Global.userId)
+        .snapshots()
+        .listen((snapshot) {
+      List<Mood> updatedMoods = snapshot.documents.map((documentSnapshot) {
+        return Mood(
+          (documentSnapshot.data['dateTime'] as Timestamp).toDate(),
+          documentSnapshot.data['level'],
+        );
+      }).toList();
+      setState(() {
+        moods = updatedMoods;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Mood'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) {
+                  AlertDialog prompt =
+                      AlertDialog(title: Text('Delete all data?'), actions: [
+                    FlatButton(
+                      child: Text('Yes'),
+                      onPressed: () {
+                        deleteMoods();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    FlatButton(
+                      child: Text('No'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ]);
+                  return prompt;
+                },
+              );
+            },
+          )
+        ],
+      ),
+      drawer: BetterMoodDrawer(),
+      body: Container(
+        color: Color(0xFFFFFFFF),
+        child: (() {
+          switch (selectedChartIndex) {
+            case 0:
+              {
+                return Column(children: [
+                  Flexible(child: timeSeriesGraph()),
+                  Flexible(child: lineGraph())
+                ]);
+              }
+              break;
+
+            case 1:
+              {
+                return barChart();
+              }
+              break;
+
+            case 2:
+              {
+                return pieChart();
+              }
+              break;
+          }
+        })(),
+      ),
+      floatingActionButton: FancyFab((mood) {
+        addMood(mood);
+      }),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.show_chart),
+            title: Text('Line Graph'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insert_chart),
+            title: Text('Bar Chart'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pie_chart),
+            title: Text('Pie Chart'),
+          ),
+        ],
+        currentIndex: selectedChartIndex,
+        onTap: (index) {
+          setState(() {
+            selectedChartIndex = index;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget barChart() {
+    List<charts.Series<Mood, String>> seriesList = [
+      charts.Series<Mood, String>(
+        id: 'Mood',
+        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+        domainFn: (Mood mood, _) => mood.level.toString(),
+        measureFn: (Mood mood, _) => moods
+            .map((x) => x.level == mood.level ? 1 : 0)
+            .reduce((v, x) => v + x),
+        data: moods,
+      )
+    ];
+
+    return charts.BarChart(
+      seriesList,
+      animate: false,
+    );
+  }
+
+  Widget timeSeriesGraph() {
+    List<charts.Series<Mood, DateTime>> seriesList = [
+      charts.Series<Mood, DateTime>(
+        id: 'Mood',
+        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+        domainFn: (Mood mood, _) => mood.dateTime,
+        measureFn: (Mood mood, _) => mood.level,
+        data: moods,
+      )
+    ];
+
+    return charts.TimeSeriesChart(seriesList,
+        animate: false,
+        dateTimeFactory: const charts.LocalDateTimeFactory(),
+        primaryMeasureAxis: new charts.NumericAxisSpec(
+            tickProviderSpec:
+                new charts.BasicNumericTickProviderSpec(zeroBound: false)));
+  }
+
+  Widget lineGraph() {
+    List<charts.Series<Mood, int>> seriesList = [
+      charts.Series<Mood, int>(
+        id: 'Mood',
+        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+        domainFn: (Mood mood, _) =>
+            mood.dateTime.millisecondsSinceEpoch, // TODO change to sequence
+        measureFn: (Mood mood, _) => mood.level,
+        data: moods,
+      )
+    ];
+
+    return charts.LineChart(
+      seriesList,
+      animate: false,
+      domainAxis: charts.NumericAxisSpec(
+          tickProviderSpec:
+              charts.BasicNumericTickProviderSpec(zeroBound: false)),
+      primaryMeasureAxis: charts.NumericAxisSpec(
+          tickProviderSpec:
+              charts.BasicNumericTickProviderSpec(zeroBound: false)),
+    );
+  }
+
+  Widget pieChart() {
+    int mood1count = moods.where((mood) => mood.level == 1).length;
+    int mood2count = moods.where((mood) => mood.level == 2).length;
+    int mood3count = moods.where((mood) => mood.level == 3).length;
+    int mood4count = moods.where((mood) => mood.level == 4).length;
+    int mood5count = moods.where((mood) => mood.level == 5).length;
+    List<Mood> data2 = []; // TODO
+    List<charts.Series<Mood, int>> seriesList = [
+      charts.Series<Mood, int>(
+        id: 'Mood',
+        colorFn: (mood, value) {
+          switch (mood.level) {
+            case 1:
+              {
+                return charts.MaterialPalette.red.shadeDefault;
+              }
+              break;
+            case 2:
+              {
+                return charts.MaterialPalette.deepOrange.shadeDefault;
+              }
+              break;
+            case 3:
+              {
+                return charts.MaterialPalette.yellow.shadeDefault;
+              }
+              break;
+            case 4:
+              {
+                return charts.MaterialPalette.lime.shadeDefault;
+              }
+              break;
+            case 5:
+              {
+                return charts.MaterialPalette.green.shadeDefault;
+              }
+              break;
+          }
+        },
+        domainFn: (Mood mood, _) => mood.level,
+        measureFn: (Mood mood, _) => 1, // TODO count(mood.level)
+        data: data2,
+        labelAccessorFn: (Mood mood, _) => '${mood.level}', // TODO count/total
+      )
+    ];
+
+    return charts.PieChart(
+      seriesList,
+      animate: false,
+      defaultRenderer: new charts.ArcRendererConfig(
+        arcRendererDecorators: [charts.ArcLabelDecorator()],
+      ),
+    );
+  }
+
+  void addMood(int level) async {
+    String userId = await Global.user.getIdToken();
+    Global.firestore.collection('moods').add({
+      'userId': userId,
+      'dateTime': DateTime.now(),
+      'level': level,
+    });
+  }
+
+  void deleteMoods() async {
+    // TODO
+  }
+}
+
+class Mood {
+  final DateTime dateTime;
+  final int level;
+
+  Mood(this.dateTime, this.level);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'dateTime': dateTime,
+      'level': level,
+    };
+  }
+}

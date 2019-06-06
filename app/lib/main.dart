@@ -4,9 +4,11 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crashlytics/flutter_crashlytics.dart';
 
+import 'events_page.dart';
 import 'globals.dart';
-import 'home_page.dart';
 import 'login_page.dart';
+import 'meds_page.dart';
+import 'mood_page.dart';
 
 void main() async {
   bool inDebugMode = false;
@@ -36,7 +38,9 @@ class App extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.teal),
       routes: {
         '/': (_) => LoginPage(),
-        '/home': (_) => HomePage(),
+        '/events': (_) => EventsPage(),
+        '/meds': (_) => MedsPage(),
+        '/mood': (_) => MoodPage(),
       },
       navigatorObservers: [
         FirebaseAnalyticsObserver(analytics: Global.analytics),

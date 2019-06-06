@@ -39,7 +39,7 @@ class LoginPageState extends State<LoginPage> {
                       Image.asset('assets/facebook_logo.png', height: 18),
                       SizedBox(width: 24),
                       Text(
-                        'Continue with Facebook',
+                        'Continue with Facebooa k',
                         style: TextStyle(color: Colors.white),
                       ),
                     ],
@@ -82,7 +82,8 @@ class LoginPageState extends State<LoginPage> {
         AuthCredential credential = FacebookAuthProvider.getCredential(
             accessToken: result.accessToken.token);
         FirebaseUser user = await Global.auth.signInWithCredential(credential);
-        // Global.user = user;
+        Global.user = user;
+        Global.userId = await user.getIdToken();
         setState(() => _isLoading = false);
         redirect();
         break;
@@ -104,6 +105,7 @@ class LoginPageState extends State<LoginPage> {
     FirebaseUser firebaseUser =
         await Global.auth.signInWithCredential(credential);
     Global.user = firebaseUser;
+    Global.userId = await firebaseUser.getIdToken();
     setState(() => _isLoading = false);
     redirect();
   }
@@ -112,11 +114,12 @@ class LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
     FirebaseUser user = await Global.auth.signInAnonymously();
     Global.user = user;
+    Global.userId = await user.getIdToken();
     setState(() => _isLoading = false);
     redirect();
   }
 
   void redirect() {
-    Navigator.of(context).pushNamed('/home');
+    Navigator.of(context).pushReplacementNamed('/events');
   }
 }

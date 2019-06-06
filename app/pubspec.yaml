@@ -8,16 +8,25 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_crashlytics:
-
-  fish_redux:
-  
-  firebase_core:
+  async:
+  charts_flutter:
+  cloud_firestore:
   firebase_analytics:
   firebase_auth:
-
+  firebase_core:
+  firebase_database:
+  flutter_calendar:
+  flutter_crashlytics:
+  flutter_datetime_picker:
   flutter_facebook_login:
+  flutter_markdown:
   google_sign_in:
+  image_picker:
+  intl:
+  path_provider:
+  path:
+  sqflite:
+  webview_flutter:
 
 flutter:
   uses-material-design: true

@@ -28,12 +28,12 @@ def run(firestore_col):
             'id': event['id'],
             'name': event['summary'],
             'start': {
-                'date': datetime.strptime(event['start']['date'], '%Y-%m-%d') - timedelta(hours=8) if start_date else None,
-                'datetime': dateutil.parser.parse(event['start']['dateTime']) - timedelta(hours=8) if start_datetime else None
+                'date': datetime.strptime(event['start']['date'], '%Y-%m-%d') if start_date else None,
+                'datetime': dateutil.parser.parse(event['start']['dateTime']) if start_datetime else None
             },
             'end': {
-                'date': datetime.strptime(event['end']['date'], '%Y-%m-%d') - timedelta(hours=8) if end_date else None,
-                'datetime': dateutil.parser.parse(event['end']['dateTime']) - timedelta(hours=8) if end_datetime else None
+                'date': datetime.strptime(event['end']['date'], '%Y-%m-%d') if end_date else None,
+                'datetime': dateutil.parser.parse(event['end']['dateTime']) if end_datetime else None
             },
             'url': event['htmlLink']
         }
