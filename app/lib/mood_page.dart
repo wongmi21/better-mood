@@ -128,15 +128,26 @@ class MoodPageState extends State<MoodPage> {
   }
 
   Widget barChart() {
-    List<charts.Series<Mood, String>> seriesList = [
-      charts.Series<Mood, String>(
+    int mood1count = moods.where((mood) => mood.level == 1).length;
+    int mood2count = moods.where((mood) => mood.level == 2).length;
+    int mood3count = moods.where((mood) => mood.level == 3).length;
+    int mood4count = moods.where((mood) => mood.level == 4).length;
+    int mood5count = moods.where((mood) => mood.level == 5).length;
+    List<int> moodCounts = [
+      mood1count,
+      mood2count,
+      mood3count,
+      mood4count,
+      mood5count
+    ];
+    List<int> moodLevels = [1, 2, 3, 4, 5];
+    List<charts.Series<int, String>> seriesList = [
+      charts.Series<int, String>(
         id: 'Mood',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-        domainFn: (Mood mood, _) => mood.level.toString(),
-        measureFn: (Mood mood, _) => moods
-            .map((x) => x.level == mood.level ? 1 : 0)
-            .reduce((v, x) => v + x),
-        data: moods,
+        domainFn: (int level, _) => level.toString(),
+        measureFn: (int level, _) => moodCounts[level - 1],
+        data: moodLevels,
       )
     ];
 
@@ -170,8 +181,7 @@ class MoodPageState extends State<MoodPage> {
       charts.Series<Mood, int>(
         id: 'Mood',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-        domainFn: (Mood mood, _) =>
-            mood.dateTime.millisecondsSinceEpoch, // TODO change to sequence
+        domainFn: (Mood mood, _) => moods.indexOf(mood) + 1,
         measureFn: (Mood mood, _) => mood.level,
         data: moods,
       )
