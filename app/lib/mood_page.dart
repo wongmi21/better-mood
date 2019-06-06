@@ -195,12 +195,19 @@ class MoodPageState extends State<MoodPage> {
     int mood3count = moods.where((mood) => mood.level == 3).length;
     int mood4count = moods.where((mood) => mood.level == 4).length;
     int mood5count = moods.where((mood) => mood.level == 5).length;
-    List<Mood> data2 = []; // TODO
-    List<charts.Series<Mood, int>> seriesList = [
-      charts.Series<Mood, int>(
+    List<int> moodCounts = [
+      mood1count,
+      mood2count,
+      mood3count,
+      mood4count,
+      mood5count
+    ];
+    List<int> moodLevels = [1, 2, 3, 4, 5];
+    List<charts.Series<int, int>> seriesList = [
+      charts.Series<int, int>(
         id: 'Mood',
-        colorFn: (mood, value) {
-          switch (mood.level) {
+        colorFn: (level, value) {
+          switch (level) {
             case 1:
               {
                 return charts.MaterialPalette.red.shadeDefault;
@@ -228,10 +235,12 @@ class MoodPageState extends State<MoodPage> {
               break;
           }
         },
-        domainFn: (Mood mood, _) => mood.level,
-        measureFn: (Mood mood, _) => 1, // TODO count(mood.level)
-        data: data2,
-        labelAccessorFn: (Mood mood, _) => '${mood.level}', // TODO count/total
+        domainFn: (int level, _) => level,
+        measureFn: (int level, _) => moodCounts[level - 1],
+        data: moodLevels,
+        labelAccessorFn: (int level, _) {
+          return moodCounts[level - 1].toString();
+        },
       )
     ];
 
@@ -254,7 +263,15 @@ class MoodPageState extends State<MoodPage> {
   }
 
   void deleteMoods() async {
-    // TODO
+    Global.firestore
+        .collection('moods')
+        .where('userId', isEqualTo: Global.userId)
+        .getDocuments()
+        .then((snapshot) {
+      snapshot.documents.forEach((doc) {
+        doc.reference.delete();
+      });
+    });
   }
 }
 
