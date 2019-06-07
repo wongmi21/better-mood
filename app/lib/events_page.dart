@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import 'globals.dart';
-import 'drawer.dart';
 
 class EventsPage extends StatefulWidget {
   @override
@@ -88,7 +88,6 @@ class EventsPageState extends State<EventsPage> {
                 ];
         })(),
       ),
-      drawer: BetterMoodDrawer(),
       body: StreamBuilder<QuerySnapshot>(
         stream: Global.firestore.collection('events').snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {

@@ -10,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'drawer.dart';
 import 'globals.dart';
 
 class MedsPage extends StatefulWidget {
@@ -113,7 +112,6 @@ class MedsPageState extends State<MedsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Medications')),
-      drawer: BetterMoodDrawer(),
       body: ListView(
         children: [
           calendar,
@@ -214,8 +212,7 @@ class MedCardState extends State<MedCard> {
                     appBar: AppBar(
                       title: Text(widget.med.name),
                     ),
-                    body: Center(
-                        child: Image.network(widget.med.imageUrl)));
+                    body: Center(child: Image.network(widget.med.imageUrl)));
               }));
             },
           ),
