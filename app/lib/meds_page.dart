@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/flutter_calendar.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
@@ -22,13 +23,11 @@ class MedsPage extends StatefulWidget {
 class MedsPageState extends State<MedsPage> {
   Calendar calendar;
   DateTime selectedDate;
-  List<Medication> _medications = [];
   StreamSubscription<QuerySnapshot> _medsDbListener;
 
   @override
   void initState() {
     super.initState();
-    initMedications();
     calendar = Calendar(onDateSelected: (DateTime dateTime) {
       setState(() {
         selectedDate = dateTime;
@@ -41,56 +40,34 @@ class MedsPageState extends State<MedsPage> {
     selectedDate = DateTime.utc(year, month, day, 12);
   }
 
-  void initMedications() async {
-    StreamSubscription<QuerySnapshot> medsDbListener = Global.firestore
-        .collection('medications')
-        .where('userId', isEqualTo: Global.userId)
-        .snapshots()
-        .listen(onMedicationsUpdated);
-    setState(() {
-      _medsDbListener = medsDbListener;
-    });
-  }
+  Future<List<MedCard>> futureMedCards(QuerySnapshot snapshot) async {
+    return Future.wait(snapshot.documents.map((doc) async {
+      List<MedicationSchedule> schedules = doc.data['schedules'] == null
+          ? []
+          : (doc.data['schedules'] as List)
+              .map((schedule) => MedicationSchedule(
+                  time: (schedule['time'] as Timestamp).toDate(),
+                  frequency: schedule['frequency']))
+              .toList();
 
-  void onMedicationsUpdated(QuerySnapshot snapshot) async {
-    print(
-        '----------------------------------UPDATED----------------------------------');
-    List<Future<Medication>> futureMeds =
-        snapshot.documents.map((documentSnapshot) async {
-      QuerySnapshot schedulesSnapshot = await documentSnapshot.reference
-          .collection('schedules')
-          .getDocuments();
-      List<MedicationSchedule> schedules = schedulesSnapshot.documents
-          .map((scheduleSnapshot) => MedicationSchedule(
-              time: (scheduleSnapshot.data['time'] as Timestamp)?.toDate(),
-              frequency: scheduleSnapshot.data['frequency']))
-          .toList();
-      QuerySnapshot intakesSnapshot =
-          await documentSnapshot.reference.collection('intakes').getDocuments();
-      List<MedicationIntake> intakes = intakesSnapshot.documents
-          .map((intakesSnapshot) => MedicationIntake(
-              DateTime.parse(intakesSnapshot.documentID),
-              intakesSnapshot.data['status']))
-          .toList();
-      return Medication(
-        documentSnapshot.documentID,
-        documentSnapshot.data['name'],
-        documentSnapshot.data['dosage'],
-        (documentSnapshot.data['startDate'] as Timestamp)?.toDate(),
-        (documentSnapshot.data['endDate'] as Timestamp)?.toDate(),
-        schedules: schedules,
-        intakes: intakes,
+      List<MedicationIntake> intakes = doc.data['intakes'] == null
+          ? []
+          : (doc.data['intakes'] as Map)
+              .entries
+              .map((mapEntry) => MedicationIntake(
+                  DateTime.parse(mapEntry.key), mapEntry.value))
+              .toList();
+
+      Medication medication = Medication(
+        doc.documentID,
+        doc.data['name'],
+        doc.data['dosage'],
+        (doc.data['startDate'] as Timestamp)?.toDate(),
+        (doc.data['endDate'] as Timestamp)?.toDate(),
+        schedules,
+        intakes,
       );
-    }).toList();
 
-    List<Medication> medications = await Future.wait(futureMeds);
-    setState(() {
-      _medications = medications;
-    });
-  }
-
-  List<MedCard> createtMedCards() {
-    return _medications.map((Medication medication) {
       Color cardColor = Colors.white;
       List<MedicationIntake> medIntakes = medication.intakes
           .where((medIntake) => medIntake.date == selectedDate)
@@ -117,17 +94,16 @@ class MedsPageState extends State<MedsPage> {
         },
         (status) {
           // onChangeStatus
-          CollectionReference docIntakes = Global.firestore
+          Global.firestore
               .collection('medications')
               .document(medication.id)
-              .collection('intakes');
-          docIntakes
-              .document(selectedDate.toIso8601String())
-              .setData({'status': status});
+              .setData({
+            'intakes': {selectedDate.toIso8601String(): status}
+          }, merge: true);
         },
         cardColor,
       );
-    }).toList();
+    }).toList());
   }
 
   @override
@@ -135,41 +111,35 @@ class MedsPageState extends State<MedsPage> {
     return Scaffold(
       appBar: AppBar(title: Text('Medications')),
       drawer: BetterMoodDrawer(),
-      body: ListView(children: [
-        calendar,
-        Column(children: createtMedCards())
-      ]),
+      body: ListView(
+        children: [
+          calendar,
+          StreamBuilder<QuerySnapshot>(
+            stream: Global.firestore
+                .collection('medications')
+                .where('userId', isEqualTo: Global.userId)
+                .snapshots(),
+            builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> streamSnapshot) =>
+                FutureBuilder<List<MedCard>>(
+                  future: futureMedCards(streamSnapshot.data),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<MedCard>> medCardsSnapshot) {
+                    return medCardsSnapshot.hasData
+                        ? Column(children: medCardsSnapshot.data)
+                        : Container();
+                  },
+                ),
+          )
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (BuildContext context) {
-                return AddMedicationPage(
-                  (String name,
-                      String dosage,
-                      DateTime startDate,
-                      DateTime endDate,
-                      List<MedicationSchedule> medSchedules) async {
-                    Global.firestore.collection('medications').add({
-                      'userId': Global.userId,
-                      'name': name,
-                      'dosage': dosage,
-                      'startDate': startDate,
-                      'endDate': endDate,
-                    }).then(
-                      (docRef) {
-                        for (MedicationSchedule medSchedule in medSchedules) {
-                          docRef.collection('schedules').add({
-                            'time': medSchedule.time ??
-                                medSchedule.time.toIso8601String(),
-                            'frequency': medSchedule.frequency,
-                          });
-                        }
-                      },
-                    );
-                  },
-                );
+                return AddMedicationPage(addMedCard);
               },
             ),
           );
@@ -185,25 +155,28 @@ class MedsPageState extends State<MedsPage> {
   }
 }
 
+void addMedCard(String name, String dosage, DateTime startDate,
+    DateTime endDate, List<MedicationSchedule> medSchedules) async {
+  Global.firestore.collection('medications').add({
+    'userId': Global.userId,
+    'name': name,
+    'dosage': dosage,
+    'startDate': startDate,
+    'endDate': endDate,
+    'schedules': medSchedules
+        .map((ms) => {
+              'time': ms.time ?? ms.time.toIso8601String(),
+              'frequency': ms.frequency,
+            })
+        .toList(),
+  });
+}
+
 class MedCard extends StatefulWidget {
   final Medication med;
   final VoidCallback onDelete;
   final Function(String) onChangeStatus;
   final Color color;
-
-  Future<String> get futurePath async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
-  }
-
-  Future<File> get futureImage async {
-    final path = await futurePath;
-    return File('$path/' + med.id.toString() + '.png');
-  }
-
-  Future<bool> get futureImageExists async {
-    return (await futureImage).exists();
-  }
 
   MedCard(this.med, this.onDelete, this.onChangeStatus, this.color);
 
@@ -221,98 +194,73 @@ class MedCardState extends State<MedCard> {
     return directory.path;
   }
 
-  Future<File> get futureImage async {
-    final path = await futurePath;
-    return File('$path/' + widget.med.id.toString() + '.png');
-  }
-
-  Future<bool> get futureImageExists async {
-    return (await futureImage).exists();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: widget.color,
-      child: FutureBuilder<List>(
-        future: Future.wait([futureImageExists, futureImage]),
-        builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          return !snapshot.hasData
-              ? Container()
-              : Row(
-                  children: [
-                  !snapshot.data[0]
-                      ? null
-                      : GestureDetector(
-                          child: Image.file(snapshot.data[1], width: 50),
-                          onTap: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (BuildContext context) {
-                              return Scaffold(
-                                  appBar: AppBar(
-                                    title: Text('Image Picker Example'),
-                                  ),
-                                  body: Center(
-                                      child: Image.file(snapshot.data[1])));
-                            }));
-                          },
-                        ),
-                  Flexible(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          trailing: IconButton(
-                            icon: Icon(Icons.close),
-                            onPressed: () async {
-                              await futureImage.then((image) {
-                                bool pathExists =
-                                    FileSystemEntity.typeSync(image.path) !=
-                                        FileSystemEntityType.notFound;
-                                if (pathExists) image.delete();
-                              });
-                              widget.onDelete();
-                            },
-                          ),
-                          leading: !snapshot.data[0]
-                              ? IconButton(
-                                  icon: Icon(Icons.add_a_photo),
-                                  onPressed: () async {
-                                    String path = await futurePath;
-                                    File newImage = await ImagePicker.pickImage(
-                                        source: ImageSource.camera);
-                                    await (newImage).copy('$path/' +
-                                        widget.med.id.toString() +
-                                        '.png');
-                                  },
-                                )
-                              : null,
-                          title: Text(createTitle()),
-                          subtitle: Text(createSubtitle()),
-                        ),
-                        ButtonTheme.bar(
-                          // make buttons use the appropriate styles for cards
-                          child: ButtonBar(
-                            children: [
-                              FlatButton(
-                                child: Text('TAKE'),
-                                onPressed: () => widget.onChangeStatus('taken'),
-                              ),
-                              FlatButton(
-                                child: Text('SKIP'),
-                                onPressed: () =>
-                                    widget.onChangeStatus('skipped'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+        color: widget.color,
+        child: Row(children: [
+          GestureDetector(
+            child: /* Image.file(snapshot.data[1], width: 50) */ Container(),
+            onTap: () {
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (BuildContext context) {
+                return Scaffold(
+                    appBar: AppBar(
+                      title: Text('Image Picker Example'),
                     ),
+                    body:
+                        Center(child: /* Image.file(snapshot.data[1]) */ Container()));
+              }));
+            },
+          ),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  trailing: IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () {/* deleteImage */},
                   ),
-                ].where((x) => x != null).toList());
-        },
-      ),
-    );
+                  leading: true // if no image
+                      ? IconButton(
+                          icon: Icon(Icons.add_a_photo),
+                          onPressed: () async {
+                            String path = await futurePath;
+                            File newImage = await ImagePicker.pickImage(
+                                source: ImageSource.camera);
+                            StorageReference storageRef =
+                                Global.storage.ref().child(widget.med.id);
+                            StorageUploadTask uploadTask =
+                                storageRef.putFile(newImage);
+                            StorageTaskSnapshot imageUrl =
+                                (await uploadTask.onComplete);
+                            print(imageUrl);
+                          },
+                        )
+                      : Container(),
+                  title: Text(createTitle()),
+                  subtitle: Text(createSubtitle()),
+                ),
+                ButtonTheme.bar(
+                  // make buttons use the appropriate styles for cards
+                  child: ButtonBar(
+                    children: [
+                      FlatButton(
+                        child: Text('TAKE'),
+                        onPressed: () => widget.onChangeStatus('taken'),
+                      ),
+                      FlatButton(
+                        child: Text('SKIP'),
+                        onPressed: () => widget.onChangeStatus('skipped'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ]));
   }
 
   String createTitle() {
@@ -624,7 +572,7 @@ class Medication {
   List<MedicationIntake> intakes;
 
   Medication(this.id, this.name, this.dosage, this.startDate, this.endDate,
-      {this.schedules, this.intakes});
+      this.schedules, this.intakes);
 }
 
 class MedicationIntake {
