@@ -2,6 +2,7 @@ import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import 'drawer.dart';
 import 'globals.dart';
 import 'mood_page_fab.dart';
 
@@ -14,7 +15,7 @@ class MoodPage extends StatefulWidget {
 
 class MoodPageState extends State<MoodPage> {
   List<Mood> moods = [];
-  String selectedChart = 'line_graph';
+  int selectedChartIndex = 0;
 
   @override
   void initState() {
@@ -42,47 +43,6 @@ class MoodPageState extends State<MoodPage> {
       appBar: AppBar(
         title: Text('Mood'),
         actions: [
-          PopupMenuButton(
-            icon: Icon(() {
-              switch (selectedChart) {
-                case 'line_graph':
-                  return Icons.show_chart;
-                case 'bar_chart':
-                  return Icons.insert_chart;
-                case 'pie_chart':
-                  return Icons.pie_chart;
-              }
-            }()),
-            itemBuilder: (BuildContext context) => [
-                  PopupMenuItem(
-                      value: 'line_graph',
-                      child: Row(children: [
-                        Icon(Icons.show_chart),
-                        SizedBox(width: 12),
-                        Center(child: Text('Line Graph')),
-                      ])),
-                  PopupMenuItem(
-                      value: 'bar_chart',
-                      child: Row(children: [
-                        Icon(Icons.insert_chart),
-                        SizedBox(width: 12),
-                        Center(child: Text('Bar Chart')),
-                      ])),
-                  PopupMenuItem(
-                      value: 'pie_chart',
-                      child: Row(children: [
-                        Icon(Icons.pie_chart),
-                        SizedBox(width: 12),
-                        Center(child: Text('Pie Chart')),
-                      ])),
-                ],
-            initialValue: selectedChart,
-            onSelected: (value) {
-              setState(() {
-                selectedChart = value;
-              });
-            },
-          ),
           IconButton(
             icon: Icon(Icons.delete),
             onPressed: () {
@@ -112,25 +72,59 @@ class MoodPageState extends State<MoodPage> {
           )
         ],
       ),
+      drawer: BetterMoodDrawer(),
       body: Container(
         color: Color(0xFFFFFFFF),
         child: (() {
-          switch (selectedChart) {
-            case 'line_graph':
-              return Column(children: [
-                Flexible(child: timeSeriesGraph()),
-                Flexible(child: lineGraph())
-              ]);
-            case 'bar_chart':
-              return barChart();
-            case 'pie_chart':
-              return pieChart();
+          switch (selectedChartIndex) {
+            case 0:
+              {
+                return Column(children: [
+                  Flexible(child: timeSeriesGraph()),
+                  Flexible(child: lineGraph())
+                ]);
+              }
+              break;
+
+            case 1:
+              {
+                return barChart();
+              }
+              break;
+
+            case 2:
+              {
+                return pieChart();
+              }
+              break;
           }
         })(),
       ),
       floatingActionButton: FancyFab((mood) {
         addMood(mood);
       }),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.show_chart),
+            title: Text('Line Graph'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insert_chart),
+            title: Text('Bar Chart'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pie_chart),
+            title: Text('Pie Chart'),
+          ),
+        ],
+        currentIndex: selectedChartIndex,
+        onTap: (index) {
+          setState(() {
+            selectedChartIndex = index;
+          });
+        },
+      ),
     );
   }
 
