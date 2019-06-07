@@ -46,7 +46,9 @@ class MedsPageState extends State<MedsPage> {
           ? []
           : (doc.data['schedules'] as List)
               .map((schedule) => MedicationSchedule(
-                  time: (schedule['time'] as Timestamp).toDate(),
+                  time: schedule['time'] == null
+                      ? null
+                      : (schedule['time'] as Timestamp).toDate(),
                   frequency: schedule['frequency']))
               .toList();
 
@@ -157,6 +159,7 @@ class MedsPageState extends State<MedsPage> {
 
 void addMedCard(String name, String dosage, DateTime startDate,
     DateTime endDate, List<MedicationSchedule> medSchedules) async {
+  print(medSchedules);
   Global.firestore.collection('medications').add({
     'userId': Global.userId,
     'name': name,
@@ -165,10 +168,10 @@ void addMedCard(String name, String dosage, DateTime startDate,
     'endDate': endDate,
     'schedules': medSchedules
         .map((ms) => {
-              'time': ms.time ?? ms.time.toIso8601String(),
+              'time': ms.time?.toIso8601String(),
               'frequency': ms.frequency,
             })
-        .toList(),
+        .toList()
   });
 }
 
@@ -208,8 +211,8 @@ class MedCardState extends State<MedCard> {
                     appBar: AppBar(
                       title: Text('Image Picker Example'),
                     ),
-                    body:
-                        Center(child: /* Image.file(snapshot.data[1]) */ Container()));
+                    body: Center(
+                        child: /* Image.file(snapshot.data[1]) */ Container()));
               }));
             },
           ),
@@ -220,7 +223,10 @@ class MedCardState extends State<MedCard> {
                 ListTile(
                   trailing: IconButton(
                     icon: Icon(Icons.close),
-                    onPressed: () {/* deleteImage */},
+                    onPressed: () {
+                      widget.onDelete();
+                      // delete image
+                    },
                   ),
                   leading: true // if no image
                       ? IconButton(
