@@ -1,15 +1,16 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/flutter_calendar.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
 
 import 'drawer.dart';
+import 'globals.dart';
 
 class MedsPage extends StatefulWidget {
   @override
@@ -19,147 +20,110 @@ class MedsPage extends StatefulWidget {
 }
 
 class MedsPageState extends State<MedsPage> {
-  Future<Database> futureDb;
   Calendar calendar;
   DateTime selectedDate;
+  List<Medication> _medications = [];
+  StreamSubscription<QuerySnapshot> _medsDbListener;
 
   @override
   void initState() {
     super.initState();
+    initMedications();
     calendar = Calendar(onDateSelected: (DateTime dateTime) {
       setState(() {
         selectedDate = dateTime;
       });
     });
-    futureDb = getFutureDb();
     DateTime now = DateTime.now();
     int year = now.year;
     int month = now.month;
     int day = now.day;
-    selectedDate = DateTime.utc(year, month, day);
+    selectedDate = DateTime.utc(year, month, day, 12);
   }
 
-  Future<Database> getFutureDb() async {
-    return openDatabase(
-      join(await getDatabasesPath(), 'meds.db'),
-      onCreate: (db, version) {
-        db.execute(
-            "CREATE TABLE meds(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, dosage TEXT, start_date TEXT, end_date TEXT)");
-        db.execute(
-            "CREATE TABLE meds_schedule(id INTEGER PRIMARY KEY AUTOINCREMENT, med_id INTEGER, time TEXT, frequency TEXT)");
-        db.execute(
-            "CREATE TABLE meds_intake(id INTEGER PRIMARY KEY AUTOINCREMENT, med_id INTEGER, date TEXT, status TEXT)");
-      },
-      version: 2,
-    );
-  }
-
-  Future<List<Med>> getFutureMeds() async {
-    Database db = await futureDb;
-    List<Map<String, dynamic>> maps = await db.query('meds');
-    return List.generate(maps.length, (i) {
-      String startDateString = maps[i]['start_date'];
-      String endDateString = maps[i]['end_date'];
-      DateTime startDate = startDateString == null
-          ? null
-          : DateTime.parse(maps[i]['start_date']);
-      DateTime endDate =
-          endDateString == null ? null : DateTime.parse(maps[i]['end_date']);
-
-      return Med(
-        maps[i]['id'],
-        maps[i]['name'],
-        maps[i]['dosage'],
-        startDate,
-        endDate,
-      );
+  void initMedications() async {
+    StreamSubscription<QuerySnapshot> medsDbListener = Global.firestore
+        .collection('medications')
+        .where('userId', isEqualTo: Global.userId)
+        .snapshots()
+        .listen(onMedicationsUpdated);
+    setState(() {
+      _medsDbListener = medsDbListener;
     });
   }
 
-  Future<void> dbSnapshot() async {
-    Database db = await futureDb;
-    db.rawQuery('select * from meds').then(
-          (x) => print('meds: ' + x.toString()),
-        );
-    db.rawQuery('select * from meds_schedule').then(
-          (x) => print('meds_schedule: ' + x.toString()),
-        );
-    db.rawQuery('select * from meds_intake').then(
-          (x) => print('meds_intake: ' + x.toString()),
-        );
+  void onMedicationsUpdated(QuerySnapshot snapshot) async {
+    print(
+        '----------------------------------UPDATED----------------------------------');
+    List<Future<Medication>> futureMeds =
+        snapshot.documents.map((documentSnapshot) async {
+      QuerySnapshot schedulesSnapshot = await documentSnapshot.reference
+          .collection('schedules')
+          .getDocuments();
+      List<MedicationSchedule> schedules = schedulesSnapshot.documents
+          .map((scheduleSnapshot) => MedicationSchedule(
+              time: (scheduleSnapshot.data['time'] as Timestamp)?.toDate(),
+              frequency: scheduleSnapshot.data['frequency']))
+          .toList();
+      QuerySnapshot intakesSnapshot =
+          await documentSnapshot.reference.collection('intakes').getDocuments();
+      List<MedicationIntake> intakes = intakesSnapshot.documents
+          .map((intakesSnapshot) => MedicationIntake(
+              DateTime.parse(intakesSnapshot.documentID),
+              intakesSnapshot.data['status']))
+          .toList();
+      return Medication(
+        documentSnapshot.documentID,
+        documentSnapshot.data['name'],
+        documentSnapshot.data['dosage'],
+        (documentSnapshot.data['startDate'] as Timestamp)?.toDate(),
+        (documentSnapshot.data['endDate'] as Timestamp)?.toDate(),
+        schedules: schedules,
+        intakes: intakes,
+      );
+    }).toList();
+
+    List<Medication> medications = await Future.wait(futureMeds);
+    setState(() {
+      _medications = medications;
+    });
   }
 
-  Future<List<MedCard>> futureMedCards() async {
-    Database db = await futureDb;
-    List<Med> meds = await getFutureMeds();
-    for (Med med in meds) {
-      List<Map<String, dynamic>> mapsMedsSchedule =
-          await db.query('meds_schedule', where: 'med_id=' + med.id.toString());
-      List<MedSchedule> medsSchedules =
-          List.generate(mapsMedsSchedule.length, (i) {
-        String timeString = mapsMedsSchedule[i]['time'];
-        return MedSchedule(
-            time: timeString == null ? null : DateTime.parse(timeString),
-            frequency: mapsMedsSchedule[i]['frequency']);
-      });
-      med.schedules = medsSchedules;
-      List<Map<String, dynamic>> mapsMedsIntake =
-          await db.query('meds_intake', where: 'med_id=' + med.id.toString());
-      List<MedIntake> medIntakes = List.generate(mapsMedsIntake.length, (i) {
-        String dateString = mapsMedsIntake[i]['date'];
-        return MedIntake(dateString == null ? null : DateTime.parse(dateString),
-            mapsMedsIntake[i]['status']);
-      });
-      med.intakes = medIntakes;
-    }
-    return meds.map((Med med) {
+  List<MedCard> createtMedCards() {
+    return _medications.map((Medication medication) {
       Color cardColor = Colors.white;
-      List<MedIntake> medIntakes = med.intakes
+      List<MedicationIntake> medIntakes = medication.intakes
           .where((medIntake) => medIntake.date == selectedDate)
           .toList();
-      MedIntake medIntake = medIntakes.length > 0 ? medIntakes[0] : null;
+      MedicationIntake medIntake = medIntakes.length > 0 ? medIntakes[0] : null;
       if (medIntake != null) {
         switch (medIntake.status) {
           case 'taken':
-            {
-              cardColor = Colors.green.shade200;
-            }
+            cardColor = Colors.green.shade200;
             break;
           case 'skipped':
-            {
-              cardColor = Colors.red.shade200;
-            }
+            cardColor = Colors.red.shade200;
             break;
         }
       }
       return MedCard(
-        med,
-        () async {
-          await db.delete('meds', where: 'id=' + med.id.toString());
-          await db.delete('meds_schedule',
-              where: 'med_id=' + med.id.toString());
-          await db.delete('meds_intake', where: 'med_id=' + med.id.toString());
-          setState(() {});
+        medication,
+        () {
+          // onDelete
+          Global.firestore
+              .collection('medications')
+              .document(medication.id)
+              .delete();
         },
-        (status) async {
-          int updateValue = await db.update('meds_intake',
-              Map.fromEntries([MapEntry<String, String>('status', status)]),
-              where: 'med_id=? AND date=?',
-              whereArgs: [med.id.toString(), selectedDate.toIso8601String()]);
-          if (updateValue == 0) {
-            await db.insert(
-              'meds_intake',
-              Map.fromEntries(
-                [
-                  MapEntry<String, int>('med_id', med.id),
-                  MapEntry<String, String>(
-                      'date', selectedDate.toIso8601String()),
-                  MapEntry<String, String>('status', status)
-                ],
-              ),
-            );
-          }
-          setState(() {});
+        (status) {
+          // onChangeStatus
+          CollectionReference docIntakes = Global.firestore
+              .collection('medications')
+              .document(medication.id)
+              .collection('intakes');
+          docIntakes
+              .document(selectedDate.toIso8601String())
+              .setData({'status': status});
         },
         cardColor,
       );
@@ -168,64 +132,61 @@ class MedsPageState extends State<MedsPage> {
 
   @override
   Widget build(BuildContext context) {
-    dbSnapshot();
     return Scaffold(
-        appBar: AppBar(title: Text('Medications')),
-        drawer: BetterMoodDrawer(),
-        body: ListView(children: [
-          calendar,
-          FutureBuilder(
-            future: futureMedCards(),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              return Column(children: snapshot.hasData ? snapshot.data : []);
-            },
-          ),
-        ]),
-        floatingActionButton: FloatingActionButton(
-            child: Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (BuildContext context) {
-                return AddMedicationPage((String name,
-                    String dosage,
-                    DateTime startDate,
-                    DateTime endDate,
-                    List<MedSchedule> medsSchedules) async {
-                  Database db = await futureDb;
-                  int medId = await db.insert(
-                      'meds',
-                      {
-                        'name': name,
-                        'dosage': dosage,
-                        'start_date': startDate == null
-                            ? null
-                            : startDate.toIso8601String(),
-                        'end_date':
-                            endDate == null ? null : endDate.toIso8601String(),
+      appBar: AppBar(title: Text('Medications')),
+      drawer: BetterMoodDrawer(),
+      body: ListView(children: [
+        calendar,
+        Column(children: createtMedCards())
+      ]),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (BuildContext context) {
+                return AddMedicationPage(
+                  (String name,
+                      String dosage,
+                      DateTime startDate,
+                      DateTime endDate,
+                      List<MedicationSchedule> medSchedules) async {
+                    Global.firestore.collection('medications').add({
+                      'userId': Global.userId,
+                      'name': name,
+                      'dosage': dosage,
+                      'startDate': startDate,
+                      'endDate': endDate,
+                    }).then(
+                      (docRef) {
+                        for (MedicationSchedule medSchedule in medSchedules) {
+                          docRef.collection('schedules').add({
+                            'time': medSchedule.time ??
+                                medSchedule.time.toIso8601String(),
+                            'frequency': medSchedule.frequency,
+                          });
+                        }
                       },
-                      conflictAlgorithm: ConflictAlgorithm.replace);
-                  for (MedSchedule medsSchedule in medsSchedules) {
-                    await db.insert(
-                        'meds_schedule',
-                        {
-                          'med_id': medId,
-                          'time': medsSchedule.time == null
-                              ? null
-                              : medsSchedule.time.toIso8601String(),
-                          'frequency': medsSchedule.frequency,
-                        },
-                        conflictAlgorithm: ConflictAlgorithm.replace);
-                  }
+                    );
+                  },
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-                  setState(() {});
-                });
-              }));
-            }));
+  @override
+  void dispose() {
+    super.dispose();
+    _medsDbListener.cancel();
   }
 }
 
 class MedCard extends StatefulWidget {
-  final Med med;
+  final Medication med;
   final VoidCallback onDelete;
   final Function(String) onChangeStatus;
   final Color color;
@@ -304,7 +265,12 @@ class MedCardState extends State<MedCard> {
                           trailing: IconButton(
                             icon: Icon(Icons.close),
                             onPressed: () async {
-                              await futureImage.then((image) => image.delete());
+                              await futureImage.then((image) {
+                                bool pathExists =
+                                    FileSystemEntity.typeSync(image.path) !=
+                                        FileSystemEntityType.notFound;
+                                if (pathExists) image.delete();
+                              });
                               widget.onDelete();
                             },
                           ),
@@ -318,7 +284,6 @@ class MedCardState extends State<MedCard> {
                                     await (newImage).copy('$path/' +
                                         widget.med.id.toString() +
                                         '.png');
-                                    setState(() {});
                                   },
                                 )
                               : null,
@@ -389,7 +354,7 @@ class MedCardState extends State<MedCard> {
 
 class AddMedicationPage extends StatefulWidget {
   final Function(String name, String dosage, DateTime startDate,
-      DateTime endDate, List<MedSchedule> medsSchedules) addMedCard;
+      DateTime endDate, List<MedicationSchedule> medsSchedules) addMedCard;
 
   AddMedicationPage(this.addMedCard);
 
@@ -404,7 +369,7 @@ class AddMedicationPageState extends State<AddMedicationPage> {
   String dosage;
   DateTime startDate;
   DateTime endDate;
-  List<MedSchedule> medsSchedules = [MedSchedule()];
+  List<MedicationSchedule> medsSchedules = [MedicationSchedule()];
 
   @override
   Widget build(BuildContext context) {
@@ -547,23 +512,23 @@ class AddMedicationPageState extends State<AddMedicationPage> {
   }
 
   void addMedsScheduleListTile() {
-    List<MedSchedule> updatedMedsSchedule = List.from(medsSchedules);
-    updatedMedsSchedule.add(MedSchedule());
+    List<MedicationSchedule> updatedMedsSchedule = List.from(medsSchedules);
+    updatedMedsSchedule.add(MedicationSchedule());
     setState(() {
       medsSchedules = updatedMedsSchedule;
     });
   }
 }
 
-class MedSchedule {
+class MedicationSchedule {
   DateTime time;
   String frequency;
 
-  MedSchedule({this.time, this.frequency = 'Everyday'});
+  MedicationSchedule({this.time, this.frequency = 'Everyday'});
 }
 
 class MedsScheduleListTile extends StatefulWidget {
-  final MedSchedule medsSchedule;
+  final MedicationSchedule medsSchedule;
 
   const MedsScheduleListTile(this.medsSchedule);
 
@@ -574,7 +539,7 @@ class MedsScheduleListTile extends StatefulWidget {
 }
 
 class MedsScheduleListTileState extends State<MedsScheduleListTile> {
-  MedSchedule medsSchedule;
+  MedicationSchedule medsSchedule;
   TextEditingController timeController = TextEditingController();
 
   MedsScheduleListTileState(this.medsSchedule);
@@ -649,22 +614,22 @@ class AlwaysDisabledFocusNode extends FocusNode {
   bool get hasFocus => false;
 }
 
-class Med {
-  final int id;
+class Medication {
+  final String id;
   final String name;
   final String dosage;
   final DateTime startDate;
   final DateTime endDate;
-  List<MedSchedule> schedules;
-  List<MedIntake> intakes;
+  List<MedicationSchedule> schedules;
+  List<MedicationIntake> intakes;
 
-  Med(this.id, this.name, this.dosage, this.startDate, this.endDate,
+  Medication(this.id, this.name, this.dosage, this.startDate, this.endDate,
       {this.schedules, this.intakes});
 }
 
-class MedIntake {
+class MedicationIntake {
   final String status;
   final DateTime date;
 
-  MedIntake(this.date, this.status);
+  MedicationIntake(this.date, this.status);
 }

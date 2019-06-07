@@ -25,7 +25,6 @@ dependencies:
   intl:
   path_provider:
   path:
-  sqflite:
   webview_flutter:
 
 flutter:

@@ -6,6 +6,6 @@ class Global {
   static final FirebaseAnalytics analytics = FirebaseAnalytics();
   static final FirebaseAuth auth = FirebaseAuth.instance;
   static final Firestore firestore = Firestore.instance;
-  static FirebaseUser user;
+  
   static String userId;
 }

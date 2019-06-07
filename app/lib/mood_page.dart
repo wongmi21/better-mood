@@ -1,8 +1,9 @@
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'globals.dart';
+
 import 'drawer.dart';
+import 'globals.dart';
 import 'mood_page_fab.dart';
 
 class MoodPage extends StatefulWidget {
@@ -21,7 +22,7 @@ class MoodPageState extends State<MoodPage> {
     super.initState();
     Global.firestore
         .collection('moods')
-        .where(('userId'), isEqualTo: Global.userId)
+        .where('userId', isEqualTo: Global.userId)
         .snapshots()
         .listen((snapshot) {
       List<Mood> updatedMoods = snapshot.documents.map((documentSnapshot) {
@@ -264,7 +265,7 @@ class MoodPageState extends State<MoodPage> {
   }
 
   void addMood(int level) async {
-    String userId = await Global.user.getIdToken();
+    String userId = Global.userId;
     Global.firestore.collection('moods').add({
       'userId': userId,
       'dateTime': DateTime.now(),

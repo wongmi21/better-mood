@@ -82,7 +82,6 @@ class LoginPageState extends State<LoginPage> {
         AuthCredential credential = FacebookAuthProvider.getCredential(
             accessToken: result.accessToken.token);
         FirebaseUser user = await Global.auth.signInWithCredential(credential);
-        Global.user = user;
         Global.userId = await user.getIdToken();
         setState(() => _isLoading = false);
         redirect();
@@ -104,7 +103,6 @@ class LoginPageState extends State<LoginPage> {
     );
     FirebaseUser firebaseUser =
         await Global.auth.signInWithCredential(credential);
-    Global.user = firebaseUser;
     Global.userId = await firebaseUser.getIdToken();
     setState(() => _isLoading = false);
     redirect();
@@ -113,7 +111,6 @@ class LoginPageState extends State<LoginPage> {
   void _handleAnonLogin() async {
     setState(() => _isLoading = true);
     FirebaseUser user = await Global.auth.signInAnonymously();
-    Global.user = user;
     Global.userId = await user.getIdToken();
     setState(() => _isLoading = false);
     redirect();
