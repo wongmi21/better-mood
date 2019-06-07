@@ -68,6 +68,7 @@ class MedsPageState extends State<MedsPage> {
         (doc.data['endDate'] as Timestamp)?.toDate(),
         schedules,
         intakes,
+        doc.data['imageUrl'],
       );
 
       Color cardColor = Colors.white;
@@ -168,7 +169,7 @@ void addMedCard(String name, String dosage, DateTime startDate,
     'endDate': endDate,
     'schedules': medSchedules
         .map((ms) => {
-              'time': ms.time?.toIso8601String(),
+              'time': ms.time,
               'frequency': ms.frequency,
             })
         .toList()
@@ -203,16 +204,18 @@ class MedCardState extends State<MedCard> {
         color: widget.color,
         child: Row(children: [
           GestureDetector(
-            child: /* Image.file(snapshot.data[1], width: 50) */ Container(),
+            child: widget.med.imageUrl == null
+                ? Container()
+                : Image.network(widget.med.imageUrl, width: 50),
             onTap: () {
               Navigator.of(context)
                   .push(MaterialPageRoute(builder: (BuildContext context) {
                 return Scaffold(
                     appBar: AppBar(
-                      title: Text('Image Picker Example'),
+                      title: Text(widget.med.name),
                     ),
                     body: Center(
-                        child: /* Image.file(snapshot.data[1]) */ Container()));
+                        child: Image.network(widget.med.imageUrl)));
               }));
             },
           ),
@@ -228,23 +231,27 @@ class MedCardState extends State<MedCard> {
                       // delete image
                     },
                   ),
-                  leading: true // if no image
+                  leading: widget.med.imageUrl == null // if no image
                       ? IconButton(
                           icon: Icon(Icons.add_a_photo),
                           onPressed: () async {
-                            String path = await futurePath;
                             File newImage = await ImagePicker.pickImage(
                                 source: ImageSource.camera);
                             StorageReference storageRef =
                                 Global.storage.ref().child(widget.med.id);
                             StorageUploadTask uploadTask =
                                 storageRef.putFile(newImage);
-                            StorageTaskSnapshot imageUrl =
-                                (await uploadTask.onComplete);
-                            print(imageUrl);
+                            String imageUrl =
+                                await (await uploadTask.onComplete)
+                                    .ref
+                                    .getDownloadURL();
+                            Global.firestore
+                                .collection('medications')
+                                .document(widget.med.id)
+                                .setData({'imageUrl': imageUrl}, merge: true);
                           },
                         )
-                      : Container(),
+                      : null,
                   title: Text(createTitle()),
                   subtitle: Text(createSubtitle()),
                 ),
@@ -576,9 +583,10 @@ class Medication {
   final DateTime endDate;
   List<MedicationSchedule> schedules;
   List<MedicationIntake> intakes;
+  String imageUrl;
 
   Medication(this.id, this.name, this.dosage, this.startDate, this.endDate,
-      this.schedules, this.intakes);
+      this.schedules, this.intakes, this.imageUrl);
 }
 
 class MedicationIntake {
