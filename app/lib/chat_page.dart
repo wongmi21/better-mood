@@ -143,116 +143,178 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Widget buildItem(int index, DocumentSnapshot document) {
+  Widget buildItem(
+      int index, DocumentSnapshot document, List<String> firstPosts) {
     if (document['userId'] == Global.userId) {
       // Right (my message)
-      return Row(
-        children: <Widget>[
-          document['type'] == 0
-              // Text
-              ? Container(
+      return Container(
+        child: Column(
+          children: <Widget>[
+            firstPosts.indexOf(document.data['timestamp']) >= 0
+                ? Padding(
+                    padding: EdgeInsets.only(top: 20, bottom: 5),
+                    child: Center(
+                      child: Text(
+                        DateFormat('EEEE, MMMM d yyyy').format(
+                          DateTime.fromMillisecondsSinceEpoch(int.parse(
+                            document['timestamp'],
+                          )),
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(),
+            Row(
+              children: <Widget>[
+                Container(
                   child: Text(
-                    document['content'],
-                    style: TextStyle(color: Theme.of(context).primaryColor),
+                    DateFormat('h:mm a').format(
+                        DateTime.fromMillisecondsSinceEpoch(
+                            int.parse(document['timestamp']))),
+                    style: TextStyle(
+                        color: greyColor,
+                        fontSize: 12.0,
+                        fontStyle: FontStyle.italic),
                   ),
-                  padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
-                  width: 200.0,
-                  decoration: BoxDecoration(
-                      color: greyColor2,
-                      borderRadius: BorderRadius.circular(8.0)),
-                  margin: EdgeInsets.only(
-                      bottom: isLastMessageRight(index) ? 20.0 : 10.0,
-                      right: 10.0),
-                )
-              : document['type'] == 1
-                  // Image
-                  ? Container(
-                      child: Material(
-                        child: CachedNetworkImage(
-                          placeholder: (context, url) => Container(
-                                child: CircularProgressIndicator(
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(themeColor),
-                                ),
+                ),
+                document['type'] == 0
+                    // Text
+                    ? Container(
+                        child: Text(
+                          document['content'],
+                          style:
+                              TextStyle(color: Theme.of(context).primaryColor),
+                        ),
+                        padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
+                        width: 200.0,
+                        decoration: BoxDecoration(
+                            color: greyColor2,
+                            borderRadius: BorderRadius.circular(8.0)),
+                        margin:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      )
+                    : document['type'] == 1
+                        // Image
+                        ? Container(
+                            child: Material(
+                              child: CachedNetworkImage(
+                                placeholder: (context, url) => Container(
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                themeColor),
+                                      ),
+                                      width: 200.0,
+                                      height: 200.0,
+                                      padding: EdgeInsets.all(70.0),
+                                      decoration: BoxDecoration(
+                                        color: greyColor2,
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(8.0),
+                                        ),
+                                      ),
+                                    ),
+                                errorWidget: (context, url, error) => Material(
+                                      child: Image.asset(
+                                        'images/img_not_available.jpeg',
+                                        width: 200.0,
+                                        height: 200.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(8.0),
+                                      ),
+                                      clipBehavior: Clip.hardEdge,
+                                    ),
+                                imageUrl: document['content'],
                                 width: 200.0,
                                 height: 200.0,
-                                padding: EdgeInsets.all(70.0),
-                                decoration: BoxDecoration(
-                                  color: greyColor2,
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(8.0),
-                                  ),
-                                ),
+                                fit: BoxFit.cover,
                               ),
-                          errorWidget: (context, url, error) => Material(
-                                child: Image.asset(
-                                  'images/img_not_available.jpeg',
-                                  width: 200.0,
-                                  height: 200.0,
-                                  fit: BoxFit.cover,
-                                ),
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(8.0),
-                                ),
-                                clipBehavior: Clip.hardEdge,
-                              ),
-                          imageUrl: document['content'],
-                          width: 200.0,
-                          height: 200.0,
-                          fit: BoxFit.cover,
-                        ),
-                        borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                        clipBehavior: Clip.hardEdge,
-                      ),
-                      margin: EdgeInsets.only(
-                          bottom: isLastMessageRight(index) ? 20.0 : 10.0,
-                          right: 10.0),
-                    )
-                  // Sticker
-                  : Container(
-                      child: Image.asset(
-                        'assets/${document['content']}',
-                        width: 100.0,
-                        height: 100.0,
-                        fit: BoxFit.cover,
-                      ),
-                      margin: EdgeInsets.only(
-                          bottom: isLastMessageRight(index) ? 20.0 : 10.0,
-                          right: 10.0),
-                    ),
-        ],
-        mainAxisAlignment: MainAxisAlignment.end,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(8.0)),
+                              clipBehavior: Clip.hardEdge,
+                            ),
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                          )
+                        // Sticker
+                        : Container(
+                            child: Image.asset(
+                              'assets/${document['content']}',
+                              width: 100.0,
+                              height: 100.0,
+                              fit: BoxFit.cover,
+                            ),
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                          ),
+                Material(
+                  child: CircleAvatar(
+                    child: ClipOval(
+                        child: Image.asset(
+                            'assets/avatar_${Global.userAvatar}.gif')),
+                    backgroundColor: Colors.white,
+                    maxRadius: 15,
+                  ),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(18.0),
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                )
+              ],
+              mainAxisAlignment: MainAxisAlignment.end,
+            ),
+          ],
+          crossAxisAlignment: CrossAxisAlignment.start,
+        ),
       );
     } else {
       // Left (peer message)
       return Container(
         child: Column(
           children: <Widget>[
+            firstPosts.indexOf(document.data['timestamp']) >= 0
+                ? Padding(
+                    padding: EdgeInsets.only(top: 20, bottom: 5),
+                    child: Center(
+                      child: Text(
+                        DateFormat('EEEE, MMMM d yyyy').format(
+                          DateTime.fromMillisecondsSinceEpoch(int.parse(
+                            document['timestamp'],
+                          )),
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(),
             Row(
               children: <Widget>[
                 Material(
                   child: FutureBuilder<QuerySnapshot>(
                       future: Global.firestore
                           .collection('users')
-                          .where('userId', isEqualTo: document['userId'])
+                          .where('id', isEqualTo: document['userId'])
                           .getDocuments(),
-                      builder: (_, snapshot) => snapshot.hasData
-                          ? CircleAvatar(
-                              child: ClipOval(
-                                  child: Image.asset(
-                                      'assets/avatar_${Global.userAvatar}.gif')),
-                              backgroundColor: Colors.white,
-                              maxRadius: 15,
-                            )
-                          : Container(
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 1.0,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      themeColor)),
-                              width: 35.0,
-                              height: 35.0,
-                              padding: EdgeInsets.all(10.0),
-                            )),
+                      builder: (_, snapshot) =>
+                          snapshot.hasData && snapshot.data.documents.length > 0
+                              ? CircleAvatar(
+                                  child: ClipOval(
+                                      child: Image.asset(
+                                          'assets/avatar_${snapshot.data.documents[0]['avatar']}.gif')),
+                                  backgroundColor: Colors.white,
+                                  maxRadius: 15,
+                                )
+                              : Container(
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 1.0,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          themeColor)),
+                                  width: 35.0,
+                                  height: 35.0,
+                                  margin: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                )),
                   borderRadius: BorderRadius.all(
                     Radius.circular(18.0),
                   ),
@@ -269,7 +331,8 @@ class ChatScreenState extends State<ChatScreen> {
                         decoration: BoxDecoration(
                             color: Theme.of(context).primaryColor,
                             borderRadius: BorderRadius.circular(8.0)),
-                        margin: EdgeInsets.only(left: 10.0),
+                        margin:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       )
                     : document['type'] == 1
                         ? Container(
@@ -312,41 +375,35 @@ class ChatScreenState extends State<ChatScreen> {
                                   BorderRadius.all(Radius.circular(8.0)),
                               clipBehavior: Clip.hardEdge,
                             ),
-                            margin: EdgeInsets.only(left: 10.0),
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
                           )
                         : Container(
                             child: Image.asset(
-                              'images/${document['content']}.gif',
+                              'assets/${document['content']}',
                               width: 100.0,
                               height: 100.0,
                               fit: BoxFit.cover,
                             ),
-                            margin: EdgeInsets.only(
-                                bottom: isLastMessageRight(index) ? 20.0 : 10.0,
-                                right: 10.0),
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
                           ),
+                Container(
+                  child: Text(
+                    DateFormat('h:mm a').format(
+                        DateTime.fromMillisecondsSinceEpoch(
+                            int.parse(document['timestamp']))),
+                    style: TextStyle(
+                        color: greyColor,
+                        fontSize: 12.0,
+                        fontStyle: FontStyle.italic),
+                  ),
+                )
               ],
             ),
-
-            // Time
-            false
-                ? Container(
-                    child: Text(
-                      DateFormat('dd MMM kk:mm').format(
-                          DateTime.fromMillisecondsSinceEpoch(
-                              int.parse(document['timestamp']))),
-                      style: TextStyle(
-                          color: greyColor,
-                          fontSize: 12.0,
-                          fontStyle: FontStyle.italic),
-                    ),
-                    margin: EdgeInsets.only(left: 50.0, top: 5.0, bottom: 5.0),
-                  )
-                : Container()
           ],
           crossAxisAlignment: CrossAxisAlignment.start,
         ),
-        margin: EdgeInsets.only(bottom: 10.0),
       );
     }
   }
@@ -572,7 +629,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   Widget buildListMessage() {
     return Flexible(
-      child: StreamBuilder(
+      child: StreamBuilder<QuerySnapshot>(
         stream: Global.firestore
             .collection('chats')
             .document(widget.chatId)
@@ -580,7 +637,7 @@ class ChatScreenState extends State<ChatScreen> {
             .orderBy('timestamp', descending: true)
             .limit(20)
             .snapshots(),
-        builder: (context, snapshot) {
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (!snapshot.hasData) {
             return Center(
                 child: CircularProgressIndicator(
@@ -589,8 +646,12 @@ class ChatScreenState extends State<ChatScreen> {
             listMessage = snapshot.data.documents;
             return ListView.builder(
               padding: EdgeInsets.all(10.0),
-              itemBuilder: (context, index) =>
-                  buildItem(index, snapshot.data.documents[index]),
+              itemBuilder: (context, index) {
+                List<String> firstPosts =
+                    getFirstPostsOfTheDay(snapshot.data.documents);
+                return buildItem(
+                    index, snapshot.data.documents[index], firstPosts);
+              },
               itemCount: snapshot.data.documents.length,
               reverse: true,
               controller: listScrollController,
@@ -599,5 +660,21 @@ class ChatScreenState extends State<ChatScreen> {
         },
       ),
     );
+  }
+
+  List<String> getFirstPostsOfTheDay(List<DocumentSnapshot> documents) {
+    List timestamps =
+        documents.map((DocumentSnapshot ds) => ds.data['timestamp']).toList();
+    timestamps.sort();
+    List<String> timestampStrings = [timestamps[0]];
+    DateTime prevDt =
+        DateTime.fromMillisecondsSinceEpoch(int.parse(timestamps[0]));
+    for (int i = 1; i < timestamps.length; i++) {
+      DateTime dt =
+          DateTime.fromMillisecondsSinceEpoch(int.parse(timestamps[i]));
+      if (dt.day != prevDt.day) timestampStrings.add(timestamps[i]);
+      prevDt = dt;
+    }
+    return timestampStrings;
   }
 }
