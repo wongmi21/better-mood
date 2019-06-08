@@ -51,7 +51,7 @@ class BetterMoodDrawer extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.tag_faces),
+                leading: ImageIcon(AssetImage('assets/weather_icon.png')), 
                 title: Text(
                   'Mood',
                   style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400),

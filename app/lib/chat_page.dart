@@ -1,125 +1,98 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import 'drawer.dart';
-import 'globals.dart';
+import 'package:emoji_picker/emoji_picker.dart';
 
 class ChatPage extends StatefulWidget {
+  final String id;
+  final String name;
+
+  ChatPage(this.id, this.name);
+
   ChatPageState createState() => ChatPageState();
 }
 
 class ChatPageState extends State<ChatPage> {
+  static final themeColor = Color(0xfff5a623);
+  static final primaryColor = Color(0xff203152);
+  static final greyColor = Color(0xffaeaeae);
+  static final greyColor2 = Color(0xffE8E8E8);
+
+  final FocusNode focusNode = new FocusNode();
+  final TextEditingController inputTextController = TextEditingController();
+  bool showEmojiKeyboard = false;
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Group Chats')),
-      drawer: BetterMoodDrawer(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: Global.firestore.collection('chats').snapshots(),
-        builder:
-            (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) =>
-                snapshot.hasData
-                    ? ListView(
-                        children: listViewChildren(snapshot.data),
-                      )
-                    : Container(),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () => showAddGroupChatDialog(),
-      ),
-    );
-  }
-
-  List<ListTile> listViewChildren(QuerySnapshot snapshot) {
-    return snapshot.documents
-        .map((doc) => ListTile(
-              leading: CircleAvatar(
-                  child: Image(image: AssetImage('assets/imh_icon.jpg'))),
-              title: Text(doc.data['name']),
-              subtitle: Text(doc.data['description']),
-              trailing: IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () => showDeleteGroupChatDialog(doc),
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text('Chat - ${widget.name}')),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                children: [
+                  ListTile(title: Text('ad')),
+                ],
               ),
-            ))
-        .toList();
-  }
-
-  void showAddGroupChatDialog() {
-    String name = '';
-    String description = '';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-            title: Text('Add Group Chat'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  onChanged: (val) => name = val,
-                  decoration: InputDecoration(hintText: "Name"),
-                ),
-                TextField(
-                  onChanged: (val) => description = val,
-                  decoration: InputDecoration(hintText: "Description"),
-                ),
-              ],
             ),
-            actions: [
-              FlatButton(
-                child: Text('OK'),
-                onPressed: () {
-                  Global.firestore
-                      .collection('chats')
-                      .where('name', isEqualTo: name)
-                      .getDocuments()
-                      .then((snapshot) {
-                    Global.firestore.collection('chats').document().setData({
-                      'name': name,
-                      'description': description,
-                    });
-                    Navigator.of(context).pop();
-                  });
-                },
-              ),
-              FlatButton(
-                child: Text('CANCEL'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          ),
-    );
-  }
+            showEmojiKeyboard
+                ? EmojiPicker(
+                    rows: 3,
+                    columns: 7,
+                    onEmojiSelected: (emoji, category) {
+                      inputTextController.text += emoji.emoji;
+                    },
+                  )
+                : Container(),
+            inputBox,
+          ],
+        ),
+      );
 
-  void showDeleteGroupChatDialog(DocumentSnapshot doc) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-            title: Text("Delete Group Chat"),
-            content: Text('Are you sure you want to delete ${doc['name']}?'),
-            actions: [
-              FlatButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Global.firestore
-                        .collection('chats')
-                        .document(doc.documentID)
-                        .delete();
-                    Navigator.of(context).pop();
-                  }),
-              FlatButton(
-                child: Text('CANCEL'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
+  get inputBox {
+    return Container(
+      child: Row(
+        children: [
+          Material(
+            child: new Container(
+              margin: new EdgeInsets.symmetric(horizontal: 1.0),
+              child: new IconButton(
+                icon: new Icon(Icons.insert_emoticon),
+                onPressed: () => setState(() {
+                      showEmojiKeyboard = !showEmojiKeyboard;
+                    }),
+                color: primaryColor,
+              ),
+            ),
+            color: Colors.white,
           ),
+          Flexible(
+            child: Container(
+              child: TextField(
+                controller: inputTextController,
+                style: TextStyle(fontSize: 15.0),
+                decoration: InputDecoration.collapsed(
+                  hintText: 'Type your message...',
+                  hintStyle: TextStyle(color: greyColor),
+                ),
+              ),
+            ),
+          ),
+          Material(
+            child: new Container(
+              margin: new EdgeInsets.symmetric(horizontal: 8.0),
+              child: new IconButton(
+                icon: new Icon(Icons.send),
+                onPressed: () {},
+              ),
+            ),
+            color: Colors.white,
+          ),
+        ],
+      ),
+      width: double.infinity,
+      height: 40.0,
+      decoration: new BoxDecoration(
+          border:
+              new Border(top: new BorderSide(color: greyColor2, width: 0.5)),
+          color: Colors.white),
     );
   }
 }
