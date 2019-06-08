@@ -39,7 +39,7 @@ class LoginPageState extends State<LoginPage> {
                       Image.asset('assets/facebook_logo.png', height: 18),
                       SizedBox(width: 24),
                       Text(
-                        'Continue with Facebooa k',
+                        'Continue with Facebook',
                         style: TextStyle(color: Colors.white),
                       ),
                     ],
@@ -74,7 +74,7 @@ class LoginPageState extends State<LoginPage> {
 
   void _handleFacebookLogin() async {
     FacebookLoginResult result =
-        await FacebookLogin().logInWithReadPermissions(['email']);
+        await FacebookLogin().logInWithReadPermissions(['email', 'public_profile']);
 
     switch (result.status) {
       case FacebookLoginStatus.loggedIn:
@@ -82,6 +82,7 @@ class LoginPageState extends State<LoginPage> {
         AuthCredential credential = FacebookAuthProvider.getCredential(
             accessToken: result.accessToken.token);
         FirebaseUser user = await Global.auth.signInWithCredential(credential);
+        Global.user = user;
         Global.userId = await user.getIdToken();
         setState(() => _isLoading = false);
         redirect();
@@ -103,6 +104,7 @@ class LoginPageState extends State<LoginPage> {
     );
     FirebaseUser firebaseUser =
         await Global.auth.signInWithCredential(credential);
+    Global.user = firebaseUser;
     Global.userId = await firebaseUser.getIdToken();
     setState(() => _isLoading = false);
     redirect();
@@ -111,6 +113,7 @@ class LoginPageState extends State<LoginPage> {
   void _handleAnonLogin() async {
     setState(() => _isLoading = true);
     FirebaseUser user = await Global.auth.signInAnonymously();
+    Global.user = user;
     Global.userId = await user.getIdToken();
     setState(() => _isLoading = false);
     redirect();

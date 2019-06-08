@@ -8,5 +8,6 @@ class Global {
   static final FirebaseAuth auth = FirebaseAuth.instance;
   static final Firestore firestore = Firestore.instance;
   static final FirebaseStorage storage = FirebaseStorage.instance;
+  static FirebaseUser user;
   static String userId;
 }

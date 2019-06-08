@@ -4,6 +4,7 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crashlytics/flutter_crashlytics.dart';
 
+import 'chat_page.dart';
 import 'events_page.dart';
 import 'globals.dart';
 import 'login_page.dart';
@@ -41,6 +42,7 @@ class App extends StatelessWidget {
         '/events': (_) => EventsPage(),
         '/meds': (_) => MedsPage(),
         '/mood': (_) => MoodPage(),
+        '/chat': (_) => ChatPage(),
       },
       navigatorObservers: [
         FirebaseAnalyticsObserver(analytics: Global.analytics),
