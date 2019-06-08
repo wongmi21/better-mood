@@ -13,7 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'globals.dart';
 
 final themeColor = Color(0xfff5a623);
-final primaryColor = Color(0xff203152);
 final greyColor = Color(0xffaeaeae);
 final greyColor2 = Color(0xffE8E8E8);
 
@@ -154,7 +153,7 @@ class ChatScreenState extends State<ChatScreen> {
               ? Container(
                   child: Text(
                     document['content'],
-                    style: TextStyle(color: primaryColor),
+                    style: TextStyle(color: Theme.of(context).primaryColor),
                   ),
                   padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
                   width: 200.0,
@@ -169,39 +168,39 @@ class ChatScreenState extends State<ChatScreen> {
                   // Image
                   ? Container(
                       child: Material(
-                        // child: CachedNetworkImage(
-                        //   placeholder: (context, url) => Container(
-                        //         child: CircularProgressIndicator(
-                        //           valueColor:
-                        //               AlwaysStoppedAnimation<Color>(themeColor),
-                        //         ),
-                        //         width: 200.0,
-                        //         height: 200.0,
-                        //         padding: EdgeInsets.all(70.0),
-                        //         decoration: BoxDecoration(
-                        //           color: greyColor2,
-                        //           borderRadius: BorderRadius.all(
-                        //             Radius.circular(8.0),
-                        //           ),
-                        //         ),
-                        //       ),
-                        //   errorWidget: (context, url, error) => Material(
-                        //         child: Image.asset(
-                        //           'images/img_not_available.jpeg',
-                        //           width: 200.0,
-                        //           height: 200.0,
-                        //           fit: BoxFit.cover,
-                        //         ),
-                        //         borderRadius: BorderRadius.all(
-                        //           Radius.circular(8.0),
-                        //         ),
-                        //         clipBehavior: Clip.hardEdge,
-                        //       ),
-                        //   imageUrl: document['content'],
-                        //   width: 200.0,
-                        //   height: 200.0,
-                        //   fit: BoxFit.cover,
-                        // ),
+                        child: CachedNetworkImage(
+                          placeholder: (context, url) => Container(
+                                child: CircularProgressIndicator(
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(themeColor),
+                                ),
+                                width: 200.0,
+                                height: 200.0,
+                                padding: EdgeInsets.all(70.0),
+                                decoration: BoxDecoration(
+                                  color: greyColor2,
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(8.0),
+                                  ),
+                                ),
+                              ),
+                          errorWidget: (context, url, error) => Material(
+                                child: Image.asset(
+                                  'images/img_not_available.jpeg',
+                                  width: 200.0,
+                                  height: 200.0,
+                                  fit: BoxFit.cover,
+                                ),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(8.0),
+                                ),
+                                clipBehavior: Clip.hardEdge,
+                              ),
+                          imageUrl: document['content'],
+                          width: 200.0,
+                          height: 200.0,
+                          fit: BoxFit.cover,
+                        ),
                         borderRadius: BorderRadius.all(Radius.circular(8.0)),
                         clipBehavior: Clip.hardEdge,
                       ),
@@ -212,7 +211,7 @@ class ChatScreenState extends State<ChatScreen> {
                   // Sticker
                   : Container(
                       child: Image.asset(
-                        'images/${document['content']}.gif',
+                        'assets/${document['content']}',
                         width: 100.0,
                         height: 100.0,
                         fit: BoxFit.cover,
@@ -231,30 +230,34 @@ class ChatScreenState extends State<ChatScreen> {
           children: <Widget>[
             Row(
               children: <Widget>[
-                isLastMessageLeft(index)
-                    ? Material(
-                        child: CachedNetworkImage(
-                          placeholder: (context, url) => Container(
-                                child: CircularProgressIndicator(
+                Material(
+                  child: FutureBuilder<QuerySnapshot>(
+                      future: Global.firestore
+                          .collection('users')
+                          .where('userId', isEqualTo: document['userId'])
+                          .getDocuments(),
+                      builder: (_, snapshot) => snapshot.hasData
+                          ? CircleAvatar(
+                              child: ClipOval(
+                                  child: Image.asset(
+                                      'assets/avatar_${Global.userAvatar}.gif')),
+                              backgroundColor: Colors.white,
+                              maxRadius: 15,
+                            )
+                          : Container(
+                              child: CircularProgressIndicator(
                                   strokeWidth: 1.0,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(themeColor),
-                                ),
-                                width: 35.0,
-                                height: 35.0,
-                                padding: EdgeInsets.all(10.0),
-                              ),
-                          imageUrl: '', //TODO
-                          width: 35.0,
-                          height: 35.0,
-                          fit: BoxFit.cover,
-                        ),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(18.0),
-                        ),
-                        clipBehavior: Clip.hardEdge,
-                      )
-                    : Container(width: 35.0),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      themeColor)),
+                              width: 35.0,
+                              height: 35.0,
+                              padding: EdgeInsets.all(10.0),
+                            )),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(18.0),
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                ),
                 document['type'] == 0
                     ? Container(
                         child: Text(
@@ -264,7 +267,7 @@ class ChatScreenState extends State<ChatScreen> {
                         padding: EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 10.0),
                         width: 200.0,
                         decoration: BoxDecoration(
-                            color: primaryColor,
+                            color: Theme.of(context).primaryColor,
                             borderRadius: BorderRadius.circular(8.0)),
                         margin: EdgeInsets.only(left: 10.0),
                       )
@@ -326,7 +329,7 @@ class ChatScreenState extends State<ChatScreen> {
             ),
 
             // Time
-            isLastMessageLeft(index)
+            false
                 ? Container(
                     child: Text(
                       DateFormat('dd MMM kk:mm').format(
@@ -415,27 +418,27 @@ class ChatScreenState extends State<ChatScreen> {
           Row(
             children: <Widget>[
               FlatButton(
-                onPressed: () => onSendMessage('mimi1', 2),
+                onPressed: () => onSendMessage('sticker_good_job.png', 2),
                 child: Image.asset(
-                  'images/mimi1.gif',
+                  'assets/sticker_good_job.png',
                   width: 50.0,
                   height: 50.0,
                   fit: BoxFit.cover,
                 ),
               ),
               FlatButton(
-                onPressed: () => onSendMessage('mimi2', 2),
+                onPressed: () => onSendMessage('sticker_thumbs_up.png', 2),
                 child: Image.asset(
-                  'images/mimi2.gif',
+                  'assets/sticker_thumbs_up.png',
                   width: 50.0,
                   height: 50.0,
                   fit: BoxFit.cover,
                 ),
               ),
               FlatButton(
-                onPressed: () => onSendMessage('mimi3', 2),
+                onPressed: () => onSendMessage('sticker_way_to_go.png', 2),
                 child: Image.asset(
-                  'images/mimi3.gif',
+                  'assets/sticker_way_to_go.png',
                   width: 50.0,
                   height: 50.0,
                   fit: BoxFit.cover,
@@ -447,27 +450,27 @@ class ChatScreenState extends State<ChatScreen> {
           Row(
             children: <Widget>[
               FlatButton(
-                onPressed: () => onSendMessage('mimi4', 2),
+                onPressed: () => onSendMessage('sticker_well_done.png', 2),
                 child: Image.asset(
-                  'images/mimi4.gif',
+                  'assets/sticker_well_done.png',
                   width: 50.0,
                   height: 50.0,
                   fit: BoxFit.cover,
                 ),
               ),
               FlatButton(
-                onPressed: () => onSendMessage('mimi5', 2),
+                onPressed: () => onSendMessage('sticker_you_rock.png', 2),
                 child: Image.asset(
-                  'images/mimi5.gif',
+                  'assets/sticker_you_rock.png',
                   width: 50.0,
                   height: 50.0,
                   fit: BoxFit.cover,
                 ),
               ),
               FlatButton(
-                onPressed: () => onSendMessage('mimi6', 2),
+                onPressed: () => onSendMessage('sticker_youre_the_man.png', 2),
                 child: Image.asset(
-                  'images/mimi6.gif',
+                  'assets/sticker_youre_the_man.png',
                   width: 50.0,
                   height: 50.0,
                   fit: BoxFit.cover,
@@ -476,38 +479,6 @@ class ChatScreenState extends State<ChatScreen> {
             ],
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           ),
-          Row(
-            children: <Widget>[
-              FlatButton(
-                onPressed: () => onSendMessage('mimi7', 2),
-                child: Image.asset(
-                  'images/mimi7.gif',
-                  width: 50.0,
-                  height: 50.0,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              FlatButton(
-                onPressed: () => onSendMessage('mimi8', 2),
-                child: Image.asset(
-                  'images/mimi8.gif',
-                  width: 50.0,
-                  height: 50.0,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              FlatButton(
-                onPressed: () => onSendMessage('mimi9', 2),
-                child: Image.asset(
-                  'images/mimi9.gif',
-                  width: 50.0,
-                  height: 50.0,
-                  fit: BoxFit.cover,
-                ),
-              )
-            ],
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          )
         ],
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       ),
@@ -544,7 +515,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: IconButton(
                 icon: Icon(Icons.image),
                 onPressed: getImage,
-                color: primaryColor,
+                color: Theme.of(context).primaryColor,
               ),
             ),
             color: Colors.white,
@@ -555,7 +526,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: IconButton(
                 icon: Icon(Icons.face),
                 onPressed: getSticker,
-                color: primaryColor,
+                color: Theme.of(context).primaryColor,
               ),
             ),
             color: Colors.white,
@@ -565,7 +536,8 @@ class ChatScreenState extends State<ChatScreen> {
           Flexible(
             child: Container(
               child: TextField(
-                style: TextStyle(color: primaryColor, fontSize: 15.0),
+                style: TextStyle(
+                    color: Theme.of(context).primaryColor, fontSize: 15.0),
                 controller: textEditingController,
                 decoration: InputDecoration.collapsed(
                   hintText: 'Type your message...',
@@ -583,7 +555,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: IconButton(
                 icon: Icon(Icons.send),
                 onPressed: () => onSendMessage(textEditingController.text, 0),
-                color: primaryColor,
+                color: Theme.of(context).primaryColor,
               ),
             ),
             color: Colors.white,
