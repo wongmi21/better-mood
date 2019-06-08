@@ -10,4 +10,5 @@ class Global {
   static final FirebaseStorage storage = FirebaseStorage.instance;
   static FirebaseUser user;
   static String userId;
+  static String userAvatar;
 }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'globals.dart';
@@ -12,9 +13,11 @@ class BetterMoodDrawer extends StatelessWidget {
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              currentAccountPicture: Global.user.photoUrl == null
-                  ? null
-                  : Image.network(Global.user.photoUrl),
+              currentAccountPicture: CircleAvatar(
+                  child: ClipOval(
+                      child: Image.asset(
+                          'assets/avatar_${Global.userAvatar}.gif')),
+                  backgroundColor: Colors.white),
               accountName: Text(
                   Global.user.displayName == null
                       ? 'Guest'
@@ -51,7 +54,7 @@ class BetterMoodDrawer extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: ImageIcon(AssetImage('assets/weather_icon.png')), 
+                leading: ImageIcon(AssetImage('assets/weather_icon.png')),
                 title: Text(
                   'Mood',
                   style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400),

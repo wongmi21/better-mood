@@ -17,6 +17,8 @@ PODS:
     - Flutter
   - Crashlytics (3.13.1):
     - Fabric (~> 1.10.1)
+  - device_info (0.0.1):
+    - Flutter
   - Fabric (1.10.1)
   - FBSDKCoreKit (4.39.1):
     - Bolts (~> 1.9)
@@ -38,6 +40,9 @@ PODS:
   - Firebase/Firestore (6.1.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 1.3.1)
+  - Firebase/Storage (6.1.0):
+    - Firebase/CoreOnly
+    - FirebaseStorage (~> 3.2.1)
   - firebase_analytics (0.0.1):
     - Firebase/Analytics (~> 6.0)
     - Firebase/Core
@@ -51,6 +56,9 @@ PODS:
     - Flutter
   - firebase_database (0.0.1):
     - Firebase/Database
+    - Flutter
+  - firebase_storage (0.0.1):
+    - Firebase/Storage
     - Flutter
   - FirebaseAnalytics (6.0.1):
     - FirebaseCore (~> 6.0)
@@ -94,6 +102,10 @@ PODS:
     - FirebaseCore (~> 6.0)
     - GoogleUtilities/Environment (~> 6.0)
     - GoogleUtilities/UserDefaults (~> 6.0)
+  - FirebaseStorage (3.2.1):
+    - FirebaseAuthInterop (~> 1.0)
+    - FirebaseCore (~> 6.0)
+    - GTMSessionFetcher/Core (~> 1.1)
   - Flutter (1.0.0)
   - flutter_crashlytics (0.0.1):
     - Crashlytics
@@ -102,6 +114,8 @@ PODS:
   - flutter_facebook_login (0.0.1):
     - FBSDKCoreKit (= 4.39.1)
     - FBSDKLoginKit (= 4.39.1)
+    - Flutter
+  - fluttertoast (0.0.2):
     - Flutter
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
@@ -173,6 +187,8 @@ PODS:
   - path_provider (0.0.1):
     - Flutter
   - Protobuf (3.7.0)
+  - shared_preferences (0.0.1):
+    - Flutter
   - sqflite (0.0.1):
     - Flutter
     - FMDB (~> 2.7.2)
@@ -181,16 +197,20 @@ PODS:
 
 DEPENDENCIES:
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
+  - device_info (from `.symlinks/plugins/device_info/ios`)
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_database (from `.symlinks/plugins/firebase_database/ios`)
+  - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `.symlinks/flutter/ios`)
   - flutter_crashlytics (from `.symlinks/plugins/flutter_crashlytics/ios`)
   - flutter_facebook_login (from `.symlinks/plugins/flutter_facebook_login/ios`)
+  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - google_sign_in (from `.symlinks/plugins/google_sign_in/ios`)
   - image_picker (from `.symlinks/plugins/image_picker/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - shared_preferences (from `.symlinks/plugins/shared_preferences/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - webview_flutter (from `.symlinks/plugins/webview_flutter/ios`)
 
@@ -210,6 +230,7 @@ SPEC REPOS:
     - FirebaseDatabase
     - FirebaseFirestore
     - FirebaseInstanceID
+    - FirebaseStorage
     - FMDB
     - GoogleAppMeasurement
     - GoogleSignIn
@@ -225,6 +246,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
+  device_info:
+    :path: ".symlinks/plugins/device_info/ios"
   firebase_analytics:
     :path: ".symlinks/plugins/firebase_analytics/ios"
   firebase_auth:
@@ -233,18 +256,24 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_database:
     :path: ".symlinks/plugins/firebase_database/ios"
+  firebase_storage:
+    :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
     :path: ".symlinks/flutter/ios"
   flutter_crashlytics:
     :path: ".symlinks/plugins/flutter_crashlytics/ios"
   flutter_facebook_login:
     :path: ".symlinks/plugins/flutter_facebook_login/ios"
+  fluttertoast:
+    :path: ".symlinks/plugins/fluttertoast/ios"
   google_sign_in:
     :path: ".symlinks/plugins/google_sign_in/ios"
   image_picker:
     :path: ".symlinks/plugins/image_picker/ios"
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
+  shared_preferences:
+    :path: ".symlinks/plugins/shared_preferences/ios"
   sqflite:
     :path: ".symlinks/plugins/sqflite/ios"
   webview_flutter:
@@ -255,6 +284,7 @@ SPEC CHECKSUMS:
   BoringSSL-GRPC: db8764df3204ccea016e1c8dd15d9a9ad63ff318
   cloud_firestore: c6f34148c1dfbb57a6147f9bb49c1c9f5c27036e
   Crashlytics: 5aa8e90dcbf2f34898b4f5a0037787531246cca0
+  device_info: 3ebad48f726348f69abd802f3334a8d1ed795fbd
   Fabric: f6f21452846788bb44595d73e9909d79d328e617
   FBSDKCoreKit: f442aa96179cc9b382bb4abeb7e340a47cca8f91
   FBSDKLoginKit: c3079d9a4db27c492287b1eed7a4272b28cf8a59
@@ -263,6 +293,7 @@ SPEC CHECKSUMS:
   firebase_auth: 7a2cc520766f90212b845a5b35316601707bfa25
   firebase_core: ce5006bb48508ee4e71e0f429a3f519bb8ee2961
   firebase_database: 99b15d6a0536ee969200b6eaf69bcd0b15b7b114
+  firebase_storage: 2543f377090a6e219caab9224dead5bbcb30ef33
   FirebaseAnalytics: 629301c2b9925f3537d4093a17a72751ae5b7084
   FirebaseAuth: 4281d6d98a90881e00710fa8d9e37c2ccdfc7d80
   FirebaseAuthInterop: 0ffa57668be100582bb7643d4fcb7615496c41fc
@@ -270,9 +301,11 @@ SPEC CHECKSUMS:
   FirebaseDatabase: f48e067716864be2b855cf716b927ef375d6cfa0
   FirebaseFirestore: 8feac73d330bf7ed6945518e5ffc0aeb164a07f6
   FirebaseInstanceID: 27bed93a59b6685f5c3e0c028a878a764fd75c33
+  FirebaseStorage: 926d41552072b9fee67aa645760f05f87b7ce604
   Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
   flutter_crashlytics: 7b5bba7233066381c8e18343435342ba05f3053c
   flutter_facebook_login: be61e24a4b7d621515353c6b4583d1981bdaa3d6
+  fluttertoast: b644586ef3b16f67fae9a1f8754cef6b2d6b634b
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   google_sign_in: 27e70a98b529f0b076d4b19f231b81da28b1750b
   GoogleAppMeasurement: 51d8d9ea48f0ca44484d29cfbdef976fbd4fc336
@@ -287,6 +320,7 @@ SPEC CHECKSUMS:
   nanopb: 2901f78ea1b7b4015c860c2fdd1ea2fee1a18d48
   path_provider: f96fff6166a8867510d2c25fdcc346327cc4b259
   Protobuf: 7a877b7f3e5964e3fce995e2eb323dbc6831bb5a
+  shared_preferences: 1feebfa37bb57264736e16865e7ffae7fc99b523
   sqflite: ff1d9da63c06588cc8d1faf7256d741f16989d5a
   webview_flutter: 1aa7604e6cdb451a9b7ed2c37d5454c0b440246b
 

@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
@@ -73,8 +76,8 @@ class LoginPageState extends State<LoginPage> {
   }
 
   void _handleFacebookLogin() async {
-    FacebookLoginResult result =
-        await FacebookLogin().logInWithReadPermissions(['email', 'public_profile']);
+    FacebookLoginResult result = await FacebookLogin()
+        .logInWithReadPermissions(['email', 'public_profile']);
 
     switch (result.status) {
       case FacebookLoginStatus.loggedIn:
@@ -83,7 +86,7 @@ class LoginPageState extends State<LoginPage> {
             accessToken: result.accessToken.token);
         FirebaseUser user = await Global.auth.signInWithCredential(credential);
         Global.user = user;
-        Global.userId = await user.getIdToken();
+        await login(user);
         setState(() => _isLoading = false);
         redirect();
         break;
@@ -104,8 +107,7 @@ class LoginPageState extends State<LoginPage> {
     );
     FirebaseUser firebaseUser =
         await Global.auth.signInWithCredential(credential);
-    Global.user = firebaseUser;
-    Global.userId = await firebaseUser.getIdToken();
+    await login(firebaseUser);
     setState(() => _isLoading = false);
     redirect();
   }
@@ -113,10 +115,45 @@ class LoginPageState extends State<LoginPage> {
   void _handleAnonLogin() async {
     setState(() => _isLoading = true);
     FirebaseUser user = await Global.auth.signInAnonymously();
-    Global.user = user;
-    Global.userId = await user.getIdToken();
+    await login(user);
     setState(() => _isLoading = false);
     redirect();
+  }
+
+  Future<void> login(FirebaseUser user) async {
+    String userId = user.uid;
+    var qs = await Global.firestore
+        .collection('users')
+        .where('id', isEqualTo: userId)
+        .getDocuments();
+    bool userIsNew = qs.documents.length == 0;
+    String userAvatar;
+    if (userIsNew) {
+      userAvatar = [
+        'rat',
+        'ox',
+        'tiger',
+        'rabbit',
+        'dragon',
+        'snake',
+        'horse',
+        'sheep',
+        'monkey',
+        'rooster',
+        'dog',
+        'pig'
+      ][Random.secure().nextInt(11)];
+      Global.firestore.collection('users').add({
+        'id': userId,
+        'displayName': user.displayName,
+        'avatar': userAvatar,
+      });
+    } else {
+      userAvatar = qs.documents[0].data['avatar'];
+    }
+    Global.user = user;
+    Global.userId = userId;
+    Global.userAvatar = userAvatar;
   }
 
   void redirect() {

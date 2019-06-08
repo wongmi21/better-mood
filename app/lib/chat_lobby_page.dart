@@ -44,8 +44,7 @@ class ChatLobbyPageState extends State<ChatLobbyPage> {
                 onPressed: () => showDeleteGroupChatDialog(doc),
               ),
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => ChatPage(doc.documentID, doc.data['name']),
-                  )),
+                  builder: (_) => Chat(doc.documentID, doc.data['name']))),
             ))
         .toList();
   }
