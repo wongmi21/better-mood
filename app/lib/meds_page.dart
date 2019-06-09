@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -206,7 +207,34 @@ class MedCardState extends State<MedCard> {
           GestureDetector(
             child: widget.med.imageUrl == null
                 ? Container()
-                : Image.network(widget.med.imageUrl, width: 50),
+                : CachedNetworkImage(
+                    placeholder: (context, url) => Container(
+                          child: CircularProgressIndicator(),
+                          width: 50.0,
+                          height: 50.0,
+                          padding: EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(8.0),
+                            ),
+                          ),
+                        ),
+                    errorWidget: (context, url, error) => Material(
+                          child: Image.asset(
+                            'assets/img_not_available.jpg',
+                            width: 50.0,
+                            height: 50.0,
+                            fit: BoxFit.cover,
+                          ),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(8.0),
+                          ),
+                          clipBehavior: Clip.hardEdge,
+                        ),
+                    imageUrl: widget.med.imageUrl,
+                    width: 50.0,
+                    fit: BoxFit.cover,
+                  ),
             onTap: () {
               Navigator.of(context)
                   .push(MaterialPageRoute(builder: (BuildContext context) {
@@ -215,7 +243,36 @@ class MedCardState extends State<MedCard> {
                       title: Text(widget.med.name),
                     ),
                     body: Center(
-                        child: Image.network(widget.med.imageUrl)));
+                      child: CachedNetworkImage(
+                        placeholder: (context, url) => Container(
+                              child: CircularProgressIndicator(),
+                              // width: 200.0,
+                              // height: 200.0,
+                              padding: EdgeInsets.all(70.0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(8.0),
+                                ),
+                              ),
+                            ),
+                        errorWidget: (context, url, error) => Material(
+                              child: Image.asset(
+                                'assets/img_not_available.jpg',
+                                // width: 200.0,
+                                // height: 200.0,
+                                fit: BoxFit.cover,
+                              ),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8.0),
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                            ),
+                        imageUrl: widget.med.imageUrl,
+                        // width: 200.0,
+                        // height: 200.0,
+                        fit: BoxFit.cover,
+                      ), /* Image.network(widget.med.imageUrl) */
+                    ));
               }));
             },
           ),

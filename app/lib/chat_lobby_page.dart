@@ -32,9 +32,9 @@ class ChatLobbyPageState extends State<ChatLobbyPage> {
     );
   }
 
-  List<ListTile> listViewChildren(QuerySnapshot snapshot) {
+  List<Card> listViewChildren(QuerySnapshot snapshot) {
     return snapshot.documents
-        .map((doc) => ListTile(
+        .map((doc) => Card(child: ListTile(
               leading: CircleAvatar(
                   child: Image(image: AssetImage('assets/imh_icon.jpg'))),
               title: Text(doc.data['name']),
@@ -45,7 +45,7 @@ class ChatLobbyPageState extends State<ChatLobbyPage> {
               ),
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => Chat(doc.documentID, doc.data['name']))),
-            ))
+            )))
         .toList();
   }
 

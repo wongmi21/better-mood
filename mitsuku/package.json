@@ -1,0 +1,15 @@
+{
+  "name": "functions",
+  "main": "index.js",
+  "engines": {
+    "node": "9.x"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "firebase-admin": "~7.0.0",
+    "bluebird": "^2.9.24",
+    "superagent": "^1.2.0"
+  }
+}

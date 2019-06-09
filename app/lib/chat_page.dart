@@ -130,9 +130,10 @@ class ChatScreenState extends State<ChatScreen> {
           documentReference,
           {
             'userId': Global.userId,
-            'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+            'userAvatar': Global.userAvatar,
+            'type': type,
             'content': content,
-            'type': type
+            'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
           },
         );
       });
@@ -216,7 +217,7 @@ class ChatScreenState extends State<ChatScreen> {
                                     ),
                                 errorWidget: (context, url, error) => Material(
                                       child: Image.asset(
-                                        'images/img_not_available.jpeg',
+                                        'assets/img_not_available.jpg',
                                         width: 200.0,
                                         height: 200.0,
                                         fit: BoxFit.cover,
@@ -291,30 +292,13 @@ class ChatScreenState extends State<ChatScreen> {
             Row(
               children: <Widget>[
                 Material(
-                  child: FutureBuilder<QuerySnapshot>(
-                      future: Global.firestore
-                          .collection('users')
-                          .where('id', isEqualTo: document['userId'])
-                          .getDocuments(),
-                      builder: (_, snapshot) =>
-                          snapshot.hasData && snapshot.data.documents.length > 0
-                              ? CircleAvatar(
-                                  child: ClipOval(
-                                      child: Image.asset(
-                                          'assets/avatar_${snapshot.data.documents[0]['avatar']}.gif')),
-                                  backgroundColor: Colors.white,
-                                  maxRadius: 15,
-                                )
-                              : Container(
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 1.0,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          themeColor)),
-                                  width: 35.0,
-                                  height: 35.0,
-                                  margin: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                )),
+                  child: CircleAvatar(
+                    child: ClipOval(
+                        child: Image.asset(
+                            'assets/avatar_${document['userAvatar']}.gif')),
+                    backgroundColor: Colors.white,
+                    maxRadius: 15,
+                  ),
                   borderRadius: BorderRadius.all(
                     Radius.circular(18.0),
                   ),
@@ -356,7 +340,7 @@ class ChatScreenState extends State<ChatScreen> {
                                     ),
                                 errorWidget: (context, url, error) => Material(
                                       child: Image.asset(
-                                        'images/img_not_available.jpeg',
+                                        'assets/img_not_available.jpg',
                                         width: 200.0,
                                         height: 200.0,
                                         fit: BoxFit.cover,
