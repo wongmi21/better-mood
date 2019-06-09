@@ -3,8 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'drawer.dart';
+import 'fab_bottom_app_bar.dart';
+import 'fab_with_icons.dart';
 import 'globals.dart';
-import 'mood_page_fab.dart';
+import 'layout.dart';
 
 class MoodPage extends StatefulWidget {
   @override
@@ -15,7 +17,8 @@ class MoodPage extends StatefulWidget {
 
 class MoodPageState extends State<MoodPage> {
   List<Mood> moods = [];
-  int selectedChartIndex = 0;
+  String _lastSelected = 'TAB: 0';
+  int _currentTabIndex = 0;
 
   @override
   void initState() {
@@ -76,78 +79,112 @@ class MoodPageState extends State<MoodPage> {
       body: Container(
         color: Color(0xFFFFFFFF),
         child: (() {
-          switch (selectedChartIndex) {
+          switch (_currentTabIndex) {
             case 0:
-              {
-                return Column(children: [
-                  Flexible(child: timeSeriesGraph()),
-                  Flexible(child: lineGraph())
-                ]);
-              }
-              break;
-
+              return lineGraph();
             case 1:
-              {
-                return barChart();
-              }
-              break;
-
+              return timeSeriesGraph();
             case 2:
-              {
-                return pieChart();
-              }
-              break;
+              return barChart();
+            case 3:
+              return pieChart();
           }
         })(),
       ),
-      floatingActionButton: FancyFab((mood) {
-        addMood(mood);
-      }),
-      bottomNavigationBar: BottomNavigationBar(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _buildFab(context),
+      bottomNavigationBar: FABBottomAppBar(
+        color: Colors.grey,
+        selectedColor: Theme.of(context).primaryColor,
+        notchedShape: CircularNotchedRectangle(),
+        onTabSelected: _selectedTab,
         items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
-            title: Text('Line Graph'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.insert_chart),
-            title: Text('Bar Chart'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart),
-            title: Text('Pie Chart'),
-          ),
+          FABBottomAppBarItem(iconData: Icons.show_chart, text: 'Line'),
+          FABBottomAppBarItem(iconData: Icons.show_chart, text: 'Time'),
+          FABBottomAppBarItem(iconData: Icons.insert_chart, text: 'Bar'),
+          FABBottomAppBarItem(iconData: Icons.pie_chart, text: 'Pie'),
         ],
-        currentIndex: selectedChartIndex,
-        onTap: (index) {
-          setState(() {
-            selectedChartIndex = index;
-          });
-        },
+      ),
+    );
+  }
+
+  void _selectedTab(int index) {
+    setState(() {
+      _lastSelected = 'TAB: $index';
+      _currentTabIndex = index;
+    });
+  }
+
+  void _selectedFab(int index) {
+    addMood(8 - index);
+    setState(() {
+      _lastSelected = 'FAB: $index';
+    });
+  }
+
+  Widget _buildFab(BuildContext context) {
+    final icons = [
+      Icon(Icons.sentiment_very_satisfied,
+          color: Theme.of(context).primaryColor),
+      Icon(Icons.mood, color: Theme.of(context).primaryColor),
+      Icon(Icons.sentiment_satisfied, color: Theme.of(context).primaryColor),
+      ImageIcon(AssetImage('assets/mood_satisfied.png'),
+          color: Theme.of(context).accentColor),
+      Icon(Icons.sentiment_neutral, color: Theme.of(context).primaryColor),
+      ImageIcon(AssetImage('assets/mood_dissatisfied.png'),
+          color: Theme.of(context).primaryColor),
+      Icon(Icons.sentiment_dissatisfied, color: Theme.of(context).primaryColor),
+      Icon(Icons.mood_bad, color: Theme.of(context).primaryColor),
+      Icon(Icons.sentiment_very_dissatisfied,
+          color: Theme.of(context).primaryColor),
+    ];
+    return AnchoredOverlay(
+      showOverlay: true,
+      overlayBuilder: (context, offset) {
+        return CenterAbout(
+          position: Offset(offset.dx, offset.dy - icons.length * 35.0),
+          child: FabWithIcons(
+            icons: icons,
+            onIconTapped: _selectedFab,
+          ),
+        );
+      },
+      child: FloatingActionButton(
+        onPressed: () {},
+        child: ImageIcon(AssetImage('assets/happy_sad_icon.png')),
+        elevation: 2.0,
       ),
     );
   }
 
   Widget barChart() {
+    int mood0count = moods.where((mood) => mood.level == 0).length;
     int mood1count = moods.where((mood) => mood.level == 1).length;
     int mood2count = moods.where((mood) => mood.level == 2).length;
     int mood3count = moods.where((mood) => mood.level == 3).length;
     int mood4count = moods.where((mood) => mood.level == 4).length;
     int mood5count = moods.where((mood) => mood.level == 5).length;
+    int mood6count = moods.where((mood) => mood.level == 6).length;
+    int mood7count = moods.where((mood) => mood.level == 7).length;
+    int mood8count = moods.where((mood) => mood.level == 8).length;
     List<int> moodCounts = [
+      mood0count,
       mood1count,
       mood2count,
       mood3count,
       mood4count,
-      mood5count
+      mood5count,
+      mood6count,
+      mood7count,
+      mood8count,
     ];
-    List<int> moodLevels = [1, 2, 3, 4, 5];
+    List<int> moodLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8];
     List<charts.Series<int, String>> seriesList = [
       charts.Series<int, String>(
         id: 'Mood',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
         domainFn: (int level, _) => level.toString(),
-        measureFn: (int level, _) => moodCounts[level - 1],
+        measureFn: (int level, _) => moodCounts[level],
         data: moodLevels,
       )
     ];
@@ -201,56 +238,57 @@ class MoodPageState extends State<MoodPage> {
   }
 
   Widget pieChart() {
+    int mood0count = moods.where((mood) => mood.level == 0).length;
     int mood1count = moods.where((mood) => mood.level == 1).length;
     int mood2count = moods.where((mood) => mood.level == 2).length;
     int mood3count = moods.where((mood) => mood.level == 3).length;
     int mood4count = moods.where((mood) => mood.level == 4).length;
     int mood5count = moods.where((mood) => mood.level == 5).length;
+    int mood6count = moods.where((mood) => mood.level == 6).length;
+    int mood7count = moods.where((mood) => mood.level == 7).length;
+    int mood8count = moods.where((mood) => mood.level == 8).length;
     List<int> moodCounts = [
+      mood0count,
       mood1count,
       mood2count,
       mood3count,
       mood4count,
-      mood5count
+      mood5count,
+      mood6count,
+      mood7count,
+      mood8count,
     ];
-    List<int> moodLevels = [1, 2, 3, 4, 5];
+    List<int> moodLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8];
     List<charts.Series<int, int>> seriesList = [
       charts.Series<int, int>(
         id: 'Mood',
         colorFn: (level, value) {
           switch (level) {
-            case 1:
-              {
-                return charts.MaterialPalette.red.shadeDefault;
-              }
-              break;
-            case 2:
-              {
-                return charts.MaterialPalette.deepOrange.shadeDefault;
-              }
-              break;
-            case 3:
-              {
-                return charts.MaterialPalette.yellow.shadeDefault;
-              }
-              break;
-            case 4:
-              {
-                return charts.MaterialPalette.lime.shadeDefault;
-              }
-              break;
+            case 8:
+              return charts.MaterialPalette.green.shadeDefault;
+            case 7:
+              return charts.MaterialPalette.green.shadeDefault;
+            case 6:
+              return charts.MaterialPalette.lime.shadeDefault;
             case 5:
-              {
-                return charts.MaterialPalette.green.shadeDefault;
-              }
-              break;
+              return charts.MaterialPalette.lime.shadeDefault;
+            case 4:
+              return charts.MaterialPalette.yellow.shadeDefault;
+            case 3:
+              return charts.MaterialPalette.deepOrange.shadeDefault;
+            case 2:
+              return charts.MaterialPalette.deepOrange.shadeDefault;
+            case 1:
+              return charts.MaterialPalette.red.shadeDefault;
+            case 0:
+              return charts.MaterialPalette.red.shadeDefault;
           }
         },
         domainFn: (int level, _) => level,
-        measureFn: (int level, _) => moodCounts[level - 1],
+        measureFn: (int level, _) => moodCounts[level],
         data: moodLevels,
         labelAccessorFn: (int level, _) {
-          return moodCounts[level - 1].toString();
+          return level.toString();
         },
       )
     ];
